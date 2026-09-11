@@ -1,0 +1,107 @@
+@model EnAktifSayfasi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Raporlar", "/Rapor"), new("En aktif") };
+    var f = Model.Filtre;
+    var hesap = f.Tur == EnAktifTuru.Hesap;
+    var donemler = new (EnAktifDonemi Donem, string Ad)[]
+    {
+        (EnAktifDonemi.Son30Gun, "Son 30 gün"), (EnAktifDonemi.BuYil, "Bu yıl"), (EnAktifDonemi.Tumu, "Tüm kayıtlar")
+    };
+    var donemAd = f.Donem switch { EnAktifDonemi.BuYil => "bu yıl", EnAktifDonemi.Tumu => "tüm kayıtlar", _ => "son 30 gün" };
+    var kaynak = f.Donem == EnAktifDonemi.Tumu ? (hesap ? "VW_EN_AKTIF_HESAPLAR" : "VW_EN_AKTIF_MUSTERILER") : "PKG_RAPOR.EN_AKTIF";
+    var enCok = Model.Satirlar.Count > 0 ? Model.Satirlar.Max(s => s.IslemAdedi) : 1;
+    var baslik = hesap ? "En çok işlem yapılan hesaplar" : "En aktif müşteriler";
+    var izAcik = OracleIzUzantilari.Girdiler(Context) is not null;
+    var csv = Url.Action("EnAktifCsv") + Context.Request.QueryString;
+}
+<partial name="_RaporBasi" model='"aktif"' />
+
+<section class="panel mb-3">
+    <form method="get" asp-action="EnAktif" class="filtre-cubugu" data-oto-gonder>
+        <div class="segment" role="radiogroup" aria-label="Rapor türü">
+            <input type="radio" name="tur" id="ea-musteri" value="musteri" checked="@(!hesap)" /><label for="ea-musteri">Müşteriler</label>
+            <input type="radio" name="tur" id="ea-hesap" value="hesap" checked="@hesap" /><label for="ea-hesap">Hesaplar</label>
+        </div>
+        <div class="segment" role="radiogroup" aria-label="Gösterilecek kayıt">
+            @foreach (var n in EnAktifFiltre.Adetler)
+            {
+                <input type="radio" name="n" id="ea-n@(n)" value="@n" checked="@(f.Adet == n)" /><label for="ea-n@(n)">İlk @n</label>
+            }
+        </div>
+        <div>
+            <label class="visually-hidden" for="ea-donem">Dönem</label>
+            <select id="ea-donem" name="donem" class="form-select">
+                @foreach (var (donem, ad) in donemler)
+                {
+                    <option value="@donem.ToString().ToLowerInvariant()" selected="@(f.Donem == donem)">@ad</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary btn-sm" data-js-gizle>Uygula</button>
+    </form>
+</section>
+
+<div class="baski-bas">
+    <div><strong>Demo Menkul Değerler A.Ş. (kurgusal)</strong><br />@baslik</div>
+    <div class="text-end">İlk @f.Adet, @donemAd</div>
+</div>
+<section class="panel">
+    <div class="panel-bas">
+        <div>
+            <h2>@baslik</h2>
+            <div class="aciklama">İşlem adedine göre, @donemAd. Transferin iki kaydı ayrı sayılır.</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap baski-gizle">
+            @if (izAcik)
+            {
+                <button type="button" class="btn btn-ghost btn-sm" data-iz-ac title="Oracle izinde göster"><ikon ad="database" class="ic-16" />@kaynak</button>
+            }
+            <a class="btn btn-outline-secondary btn-sm" href="@csv"><ikon ad="file-csv" class="ic-16" />CSV</a>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-yazdir><ikon ad="printer" class="ic-16" />Yazdır</button>
+        </div>
+    </div>
+    @if (Model.Satirlar.Count == 0)
+    {
+        <partial name="_Bos" model='new BosDurum("chart-bar-horizontal", "Bu dönemde işlem yok", "Daha geniş bir dönem seçin.",
+            "Tüm kayıtları göster", Url.Action("EnAktif", new { tur = f.Tur.ToString().ToLowerInvariant(), n = f.Adet, donem = "tumu" }), EylemBirincil: false)' />
+    }
+    else
+    {
+        <div class="tablo-kap">
+            <table class="table table-hover tablo">
+                <thead>
+                    <tr>
+                        <th scope="col" class="num">Sıra</th>
+                        <th scope="col">@(hesap ? "Hesap" : "Müşteri")</th>
+                        <th scope="col">İşlem adedi</th>
+                        <th scope="col" class="num">Hacim</th>
+                        <th scope="col">Son işlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Satirlar)
+                    {
+                        var adres = hesap ? Url.Action("Detay", "Hesap", new { id = s.Id }) : Url.Action("Detay", "Musteri", new { id = s.Id });
+                        <tr class="tiklanir" data-href="@adres">
+                            <td class="num text-secondary">@s.Sira</td>
+                            <td>
+                                @if (hesap)
+                                {
+                                    <a class="mono" href="@adres">@s.Ad</a>
+                                    <div class="form-text m-0">@s.MusteriAd</div>
+                                }
+                                else
+                                {
+                                    <kimlik ad="@s.Ad" tip="@s.MusteriTipi" href="@adres" alt="@s.MusteriNo" />
+                                }
+                            </td>
+                            <td><span class="satir-bar"><i style="width:@((int)Math.Round(120.0 * s.IslemAdedi / enCok))px" aria-hidden="true"></i><span class="num">@TurkceBicim.Sayi(s.IslemAdedi)</span></span></td>
+                            <td class="num"><tutar deger="@s.Hacim" /></td>
+                            <td class="num sessiz">@TurkceBicim.TarihSaat(s.SonIslem)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

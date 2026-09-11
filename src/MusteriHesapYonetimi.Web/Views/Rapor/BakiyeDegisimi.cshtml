@@ -1,0 +1,141 @@
+@model BakiyeDegisimiSayfasi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Raporlar", "/Rapor"), new("Bakiye değişimi") };
+    ViewData["Grafik"] = true;
+    var r = Model.Rapor;
+    var donemler = new (BakiyeDonemi Donem, string Ad)[]
+    {
+        (BakiyeDonemi.Son30, "Son 30 gün"), (BakiyeDonemi.Son90, "Son 90 gün"), (BakiyeDonemi.Son180, "Son 6 ay"), (BakiyeDonemi.Ozel, "Özel")
+    };
+    var bugun = DateTime.Today.ToString("yyyy-MM-dd");
+    var izAcik = OracleIzUzantilari.Girdiler(Context) is not null;
+    // Açık değerler: sayfa /Rapor/BakiyeDegisimi/5132 biçiminde açıldıysa id sorgu dizesinde değil yoldadır
+    var ozel = Model.Donem == BakiyeDonemi.Ozel;
+    var csv = r is null ? null : Url.Action("BakiyeDegisimiCsv", new
+    {
+        id = r.HesapId,
+        on = Model.Donem.ToString().ToLowerInvariant(),
+        bas = ozel ? Model.Bas.ToString("yyyy-MM-dd") : null,
+        bit = ozel ? Model.Bit.ToString("yyyy-MM-dd") : null
+    });
+    var donemMetni = $"{TurkceBicim.Tarih(Model.Bas)} - {TurkceBicim.Tarih(Model.Bit)}";
+}
+<partial name="_RaporBasi" model='"bakiye"' />
+
+<section class="panel mb-3">
+    <form method="get" asp-action="BakiyeDegisimi" class="filtre-cubugu align-items-end" data-donem-form novalidate>
+        <div class="alan rapor-secim">
+            <label class="form-label" for="bd-ara">Hesap</label>
+            <div class="secici" data-secici="rapor" data-kaynak="hesap" data-hedef="bd-id" data-gonder>
+                <input id="bd-ara" class="form-control" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"
+                       aria-controls="bd-liste" value="@r?.HesapNo" placeholder="Hesap no veya müşteri adı" />
+                <ul id="bd-liste" class="secici-liste" role="listbox" aria-label="Hesaplar" hidden></ul>
+            </div>
+            <input type="hidden" name="id" id="bd-id" value="@r?.HesapId" />
+        </div>
+        <div class="alan">
+            <span class="form-label" id="bd-on-e">Dönem</span>
+            <div class="segment" role="radiogroup" aria-labelledby="bd-on-e">
+                @foreach (var (donem, ad) in donemler)
+                {
+                    <input type="radio" name="on" id="on-@donem" value="@donem.ToString().ToLowerInvariant()" checked="@(Model.Donem == donem)" /><label for="on-@donem">@ad</label>
+                }
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="visually-hidden" for="bd-bas">Başlangıç</label>
+            <input type="date" id="bd-bas" name="bas" class="form-control" value="@Model.Bas.ToString("yyyy-MM-dd")" max="@bugun" />
+            <span class="text-secondary">-</span>
+            <label class="visually-hidden" for="bd-bit">Bitiş</label>
+            <input type="date" id="bd-bit" name="bit" class="form-control" value="@Model.Bit.ToString("yyyy-MM-dd")" max="@bugun" />
+        </div>
+        <button type="submit" class="btn btn-outline-secondary btn-sm" data-js-gizle>Uygula</button>
+    </form>
+</section>
+
+@if (r is null)
+{
+    <section class="panel">
+        <partial name="_Bos" model='new BosDurum("chart-line", "Rapor için bir hesap seçin",
+            "Hesap seçince seçili dönemin başındaki bakiye ve her işlemden sonraki bakiye çizilir. Hesap detayındaki bakiye çizgisi de bu rapora bağlanır.")' />
+    </section>
+}
+else
+{
+    var o = r.Ozet;
+    var noktalar = r.GrafikNoktalari(DateTime.Now);
+    <div class="baski-bas">
+        <div><strong>Demo Menkul Değerler A.Ş. (kurgusal)</strong><br />Bakiye değişimi, @r.MusteriAd</div>
+        <div class="text-end mono">@r.HesapNo<br />@donemMetni</div>
+    </div>
+    <section class="panel mb-3" aria-label="Dönem özeti">
+        <div class="kpi-serit">
+            <div class="kpi"><span class="etiket">Dönem başı bakiye</span><span class="deger tutar">@TurkceBicim.Para(o.Acilis)</span><span class="ek">@TurkceBicim.Tarih(r.Bas)</span></div>
+            <div class="kpi"><span class="etiket">Dönem sonu bakiye</span><span class="deger tutar">@TurkceBicim.Para(o.Kapanis)</span><span class="ek">@TurkceBicim.Tarih(r.Bit)</span></div>
+            <div class="kpi"><span class="etiket">Net değişim</span><span class="deger"><tutar deger="@o.NetDegisim" isaretli="true" /></span><span class="ek">@TurkceBicim.Sayi(o.IslemAdedi) işlem</span></div>
+            <div class="kpi">
+                <span class="etiket">En yüksek bakiye</span><span class="deger tutar">@TurkceBicim.Para(o.EnYuksek.Bakiye)</span>
+                <span class="ek">En düşük @TurkceBicim.Para(o.EnDusuk.Bakiye), @TurkceBicim.Tarih(o.EnDusuk.Zaman)</span>
+            </div>
+        </div>
+    </section>
+    <section class="panel">
+        <div class="panel-bas">
+            <div>
+                <h2><a asp-controller="Musteri" asp-action="Detay" asp-route-id="@r.MusteriId">@r.MusteriAd</a>, <a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@r.HesapId">@r.HesapNo</a></h2>
+                <div class="aciklama">Her işlemden sonraki bakiye; bakiye yalnız işlem anında değişir.</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap baski-gizle">
+                @if (izAcik)
+                {
+                    <button type="button" class="btn btn-ghost btn-sm" data-iz-ac title="Oracle izinde göster"><ikon ad="database" class="ic-16" />PKG_RAPOR.BAKIYE_DEGISIMI</button>
+                }
+                <button type="button" class="btn btn-ghost btn-sm" data-tablo-gorunum aria-pressed="false"><ikon ad="list" class="ic-16" /><span>Tablo</span></button>
+                <a class="btn btn-outline-secondary btn-sm" href="@csv"><ikon ad="file-csv" class="ic-16" />CSV</a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-yazdir><ikon ad="printer" class="ic-16" />Yazdır</button>
+            </div>
+        </div>
+        <div class="panel-govde" data-grafik-alan>
+            <div class="grafik-kap" style="height:300px">
+                <canvas data-grafik="bakiye" role="img"
+                        aria-label="Bakiye @TurkceBicim.Para(o.Acilis) değerinden @TurkceBicim.Para(o.Kapanis) değerine değişti; en yüksek @TurkceBicim.Para(o.EnYuksek.Bakiye), en düşük @TurkceBicim.Para(o.EnDusuk.Bakiye)"
+                        data-veri='@Json.Serialize(noktalar.Select(n => new { x = n.Zaman.ToString("s"), y = n.Bakiye }))'></canvas>
+            </div>
+        </div>
+        <div data-tablo hidden>
+            @if (r.Hareketler.Count == 0)
+            {
+                <partial name="_Bos" model='new BosDurum("calendar-blank", "Bu dönemde hareket yok", "Bakiye dönem boyunca sabit kaldı.")' />
+            }
+            else
+            {
+                <div class="tablo-kap">
+                    <table class="table table-hover tablo">
+                        <thead>
+                            <tr>
+                                <th scope="col">Zaman</th>
+                                <th scope="col">İşlem</th>
+                                <th scope="col">Açıklama</th>
+                                <th scope="col" class="num">Tutar</th>
+                                <th scope="col" class="num">Bakiye</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in r.Hareketler)
+                            {
+                                <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
+                                    <td class="num sessiz">@TurkceBicim.TarihSaat(i.Tarih)</td>
+                                    <td><islem-tipi deger="@i.Tip" /></td>
+                                    <td class="text-truncate" style="max-width:320px">@i.Aciklama</td>
+                                    <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
+                                    <td class="num"><tutar deger="@(i.BakiyeSonra ?? 0)" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </section>
+    <p class="demo-not mt-2">Bakiye sütunu PKG_RAPOR.BAKIYE_DEGISIMI içinde SUM() OVER ile hesaplanır; dönem başı p_acilis çıktısıdır. Demo belgesidir.</p>
+}

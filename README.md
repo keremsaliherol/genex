@@ -26,9 +26,9 @@ PL/SQL'de tutulur. Bu proje o düzeni küçük ölçekte kurar:
 |---|---|
 | Faz 1: şema, PL/SQL paketleri, tohum veri, .NET çözümü | Tamam |
 | Faz 2: müşteri ve hesap ekranları (liste, detay, ekle/düzenle, hesap aç, pasife al) | Tamam |
-| Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Tamam (Oracle izi paneli son doğrulamada) |
-| Faz 4: raporlar (PKG_RAPOR, grafikler) | Sırada |
-| Faz 5: giriş (Identity), sunum | Bekliyor |
+| Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Tamam |
+| Faz 4: raporlar (aylık özet, bakiye değişimi, en aktif), genel bakış grafikleri | Tamam |
+| Faz 5: giriş (Identity), sunum | Sırada |
 
 Ayrıntılı durum ve kararlar: [docs/devir-notlari.md](docs/devir-notlari.md).
 
@@ -40,6 +40,12 @@ Faz 3'ten öne çıkanlar: para hareketi kuralları yalnız `PKG_ISLEM`'de, uygu
 eşler ("Yine de gönder" veritabanının reddini canlı gösterir); transfer tek `OracleTransaction`'da iki kayıt ve ortak
 referans; ekstrede yürüyen bakiye `SUM() OVER` ile; **Oracle izi** paneli her ekranın çalıştırdığı SQL/PL-SQL'i, bind
 değerlerini, süreyi ve trigger'ın bakiyeye etkisini gösterir (EF Core interceptor + Dapper sarmalayıcısı, yalnız geliştirme).
+
+Faz 4'ten öne çıkanlar: raporlar `PKG_RAPOR` prosedürlerinin `SYS_REFCURSOR` çıktısından Dapper ile okunur (aylık özet
+hesap ve müşteri kapsamında; bakiye değişiminde dönem başı bakiye OUT parametresi, yürüyen bakiye paket içinde
+`SUM() OVER`); "tüm kayıtlar" en aktif raporu şartnamedeki `VW_EN_AKTIF_*` view'larından. Genel bakışta 30 günlük nakit
+akışı, en aktif müşteriler ve hesap dağılımı. Grafikler Chart.js ile, renkler tema token'larından (açık ve koyu), her
+grafiğin tablo karşılığı ve CSV'si var.
 
 ## Mimari
 

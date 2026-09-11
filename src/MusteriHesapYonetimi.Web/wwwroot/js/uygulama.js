@@ -38,6 +38,8 @@
   };
   const islemRozet = (t) => `<span class="rozet">${ikon(ISLEM[t][1])}${ISLEM[t][0]}</span>`;
   const pasifRozet = '<span class="rozet rozet--pasif">Pasif</span>';
+  // grafik.js aynı biçimi kullanır (tutarlar kuruş)
+  window.HM = Object.freeze({ para, sayi });
 
   /* Tema: data-theme (açık seçim) + data-bs-theme (Bootstrap). İlk boyama öncesi ayar _Layout'taki satır içi betikte. */
   const tema = {
@@ -56,6 +58,8 @@
       document.documentElement.setAttribute('data-bs-theme', etkin);
       const secili = tema.tercih();
       $$('[data-tema]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tema === secili)));
+      // Grafikler renklerini token'lardan yeniden okur (grafik.js)
+      document.dispatchEvent(new CustomEvent('hm:tema'));
     }
   };
   tema.esle();
@@ -126,6 +130,16 @@
     const k = t.closest('[data-kopyala]'); if (k) { kopyala(k.dataset.kopyala); return; }
     const tm = t.closest('[data-tema]'); if (tm) { tema.ayarla(tm.dataset.tema); return; }
     if (t.closest('[data-yazdir]')) { window.print(); return; }
+    // Grafik ↔ tablo: her grafiğin aynı veriyi gösteren tablo karşılığı (erişilebilirlik alternatifi)
+    const tg = t.closest('[data-tablo-gorunum]');
+    if (tg) {
+      const panel = tg.closest('.panel'); const tablo = $('[data-tablo]', panel); const grafik = $('[data-grafik-alan]', panel);
+      const ac = tablo.hidden;
+      tablo.hidden = !ac; if (grafik) grafik.hidden = ac;
+      tg.setAttribute('aria-pressed', String(ac));
+      $('span', tg).textContent = ac ? 'Grafik' : 'Tablo';
+      return;
+    }
     const oz = t.closest('.hata-ozeti a[href^="#"]');
     if (oz) {
       ev.preventDefault();
@@ -515,19 +529,26 @@
     if (!$('.input-validation-error', isf) && !$('[role="alert"]', isf)) (hesap ? (HISSE(tur()) ? hisseSec : $('#Tutar')) : $('#hesap-ara')).focus();
   }
 
-  /* Ekstre: dönem, tarih ve tip değişince form gönderilir. Tarih elle değişirse dönem "Özel" olur;
-     hazır dönem seçiliyken tarih alanları adrese eklenmez (sunucu dönemi kendisi hesaplar). */
-  const ekstreForm = $('form[data-ekstre-form]');
-  if (ekstreForm) {
-    ekstreForm.addEventListener('change', (ev) => {
-      if (ev.target.type === 'date') $('#on-Ozel', ekstreForm).checked = true;
-      ekstreForm.requestSubmit();
+  /* Dönem formları (ekstre, bakiye değişimi): dönem, tarih ve tip değişince form gönderilir. Tarih elle değişirse
+     dönem "Özel" olur; hazır dönem seçiliyken tarih alanları ve boş gizli alanlar adrese eklenmez (sunucu dönemi
+     kendisi hesaplar). Hesap seçici kutusu seçimle kendisi gönderir. */
+  $$('form[data-donem-form]').forEach((f) => {
+    f.addEventListener('change', (ev) => {
+      if (ev.target.matches('[role="combobox"]')) return;
+      if (ev.target.type === 'date') { const ozel = $('#on-Ozel', f); if (ozel) ozel.checked = true; }
+      f.requestSubmit();
     });
-    ekstreForm.addEventListener('submit', () => {
-      const ozel = ($('input[name="on"]:checked', ekstreForm) || {}).value === 'ozel';
-      $$('input[type="date"]', ekstreForm).forEach((i) => { i.disabled = !ozel; });
+    f.addEventListener('submit', () => {
+      const ozel = ($('input[name="on"]:checked', f) || {}).value === 'ozel';
+      $$('input[type="date"]', f).forEach((i) => { i.disabled = !ozel; });
+      $$('input[type="hidden"]', f).forEach((i) => { i.disabled = !i.value; });
     });
-  }
+  });
+  // Geri tuşuyla önbellekten dönülen sayfada gönderim öncesi kapatılan alanlar yeniden açılır
+  window.addEventListener('pageshow', () => $$('form[data-donem-form] input:disabled').forEach((i) => { i.disabled = false; }));
+
+  /* Kendiliğinden uygulanan süzgeçler (en aktif raporu): her değişiklik formu gönderir */
+  $$('form[data-oto-gonder]').forEach((f) => f.addEventListener('change', () => f.requestSubmit()));
 
   /* Ekstre için hesap seçimi: pasif hesabın ekstresi de açılır */
   const ekstreSecici = $('[data-secici="ekstre"]');
@@ -538,6 +559,50 @@
       sec: (h) => { if (h) location.href = `/Hesap/Ekstre/${h.id}`; }
     });
     $('#ekstre-ara', ekstreSecici).focus();
+  }
+
+  /* Rapor seçicileri: hesap (/api/hesap/ara) veya müşteri (/api/musteri/ara). Pasif kayıtların raporu da açılır.
+     Seçim gizli alana yazılır; data-gonder varsa form hemen gönderilir (bakiye değişimi). */
+  const raporHatasi = (kutu, mesaj) => {
+    const girdi = $('[role="combobox"]', kutu); const m = document.getElementById(`${kutu.dataset.hedef}-hata`);
+    girdi.classList.toggle('input-validation-error', !!mesaj);
+    if (mesaj) girdi.setAttribute('aria-invalid', 'true'); else girdi.removeAttribute('aria-invalid');
+    if (m) { m.textContent = mesaj; m.classList.toggle('field-validation-error', !!mesaj); }
+  };
+  $$('[data-secici="rapor"]').forEach((kutu) => {
+    const gizli = document.getElementById(kutu.dataset.hedef);
+    const musteri = kutu.dataset.kaynak === 'musteri';
+    secici(kutu, {
+      adres: (q) => `/api/${musteri ? 'musteri' : 'hesap'}/ara?q=${encodeURIComponent(q)}`,
+      bosMetin: musteri ? 'Müşteri adı veya müşteri no yazın' : 'Hesap no veya müşteri adı yazın',
+      eslesmeYok: musteri ? 'Eşleşen müşteri yok' : 'Eşleşen hesap yok',
+      oge: musteri
+        ? (x) => ({ baslik: x.ad, alt: `${x.no}, ${x.tip.toLocaleLowerCase('tr-TR')}`, sag: x.aktif ? '' : pasifRozet, secilebilir: true })
+        : (x) => ({ baslik: x.no, mono: true, alt: `${x.ad}, ${x.tipAd.toLocaleLowerCase('tr-TR')}${x.aktif ? '' : ', pasif'}`, sag: tutarHtml(kurus(x.bakiye)), secilebilir: true }),
+      sec: (x) => {
+        gizli.value = x ? x.id : '';
+        if (!x) return;
+        raporHatasi(kutu, '');
+        if ('gonder' in kutu.dataset) kutu.closest('form').requestSubmit();
+      }
+    });
+  });
+
+  /* Aylık özet: kapsam değişince seçici hesap/müşteri arasında değişir (seçim sıfırlanır, yıl ve ay korunur);
+     kayıt seçilmeden rapor çalıştırılmaz. */
+  const aylikForm = $('form[data-aylik-form]');
+  if (aylikForm) {
+    $$('input[name="kapsam"]', aylikForm).forEach((r) => r.addEventListener('change', () => {
+      const p = new URLSearchParams({ kapsam: r.value, yil: $('#ao-yil', aylikForm).value, ay: $('#ao-ay', aylikForm).value });
+      location.href = `${aylikForm.getAttribute('action')}?${p}`;
+    }));
+    aylikForm.addEventListener('submit', (ev) => {
+      if ($('#ao-id', aylikForm).value) return;
+      ev.preventDefault();
+      const kutu = $('[data-secici="rapor"]', aylikForm);
+      raporHatasi(kutu, 'Listeden bir kayıt seçin.');
+      $('[role="combobox"]', kutu).focus();
+    });
   }
 
   /* Oracle izi paneli: aç/kapa (düğme, Alt+O, Esc); açık durumu tarayıcıda hatırlanır.

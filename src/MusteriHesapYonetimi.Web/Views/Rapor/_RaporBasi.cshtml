@@ -1,0 +1,23 @@
+@* Rapor sayfalarının ortak başlığı ve sekme gezinmesi. Model: etkin sekmenin anahtarı. *@
+@model string
+@{
+    var sekmeler = new (string Anahtar, string Eylem, string Ad)[]
+    {
+        ("aylik", "AylikOzet", "Aylık işlem özeti"),
+        ("bakiye", "BakiyeDegisimi", "Bakiye değişimi"),
+        ("aktif", "EnAktif", "En aktif")
+    };
+    var izAcik = OracleIzUzantilari.Girdiler(Context) is not null;
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>Raporlar</h1>
+        <div class="alt"><span>Sonuçlar PL/SQL paketleri ve view'lardan okunur.@(izAcik ? " Çalışan komut Oracle izinde görünür." : "")</span></div>
+    </div>
+</div>
+<nav class="sekmeler panel mb-3" aria-label="Rapor türleri">
+    @foreach (var (anahtar, eylem, ad) in sekmeler)
+    {
+        <a asp-action="@eylem" aria-current="@(Model == anahtar ? "page" : null)">@ad</a>
+    }
+</nav>

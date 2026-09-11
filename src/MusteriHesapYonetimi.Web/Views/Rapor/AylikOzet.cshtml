@@ -1,0 +1,103 @@
+@model AylikOzetSayfasi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Raporlar", "/Rapor"), new("Aylık işlem özeti") };
+    ViewData["Grafik"] = true;
+    var ozet = Model.Ozet;
+    var musteri = Model.Kapsam == RaporKapsami.Musteri;
+    var bugun = DateTime.Today;
+    var izAcik = OracleIzUzantilari.Girdiler(Context) is not null;
+    var seciliAd = ozet is null ? null : musteri ? ozet.MusteriAd : ozet.HesapNo;
+    // Açık değerler: sayfa /Rapor/AylikOzet/5132 biçiminde açıldıysa id sorgu dizesinde değil yoldadır
+    var csv = ozet is null ? null : Url.Action("AylikOzetCsv", new { id = ozet.Id, kapsam = Model.Kapsam.ToString().ToLowerInvariant(), yil = Model.Yil, ay = Model.Ay });
+    var aylar = TurkceBicim.Kultur.DateTimeFormat.MonthNames;
+}
+<partial name="_RaporBasi" model='"aylik"' />
+
+<section class="panel mb-3">
+    <form method="get" asp-action="AylikOzet" class="filtre-cubugu align-items-end" data-aylik-form novalidate>
+        <div class="alan">
+            <span class="form-label" id="ao-kapsam-e">Kapsam</span>
+            <div class="segment" role="radiogroup" aria-labelledby="ao-kapsam-e">
+                <input type="radio" name="kapsam" id="ao-k-hesap" value="hesap" checked="@(!musteri)" /><label for="ao-k-hesap">Hesap</label>
+                <input type="radio" name="kapsam" id="ao-k-musteri" value="musteri" checked="@musteri" /><label for="ao-k-musteri">Müşteri</label>
+            </div>
+        </div>
+        <div class="alan rapor-secim">
+            <label class="form-label" for="ao-ara">@(musteri ? "Müşteri" : "Hesap")<span class="zorunlu" aria-hidden="true">*</span></label>
+            <div class="secici" data-secici="rapor" data-kaynak="@(musteri ? "musteri" : "hesap")" data-hedef="ao-id">
+                <input id="ao-ara" class="form-control" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"
+                       aria-controls="ao-liste" aria-describedby="ao-id-hata" value="@seciliAd"
+                       placeholder="@(musteri ? "Müşteri adı veya müşteri no" : "Hesap no veya müşteri adı")" />
+                <ul id="ao-liste" class="secici-liste" role="listbox" aria-label="@(musteri ? "Müşteriler" : "Hesaplar")" hidden></ul>
+            </div>
+            <input type="hidden" name="id" id="ao-id" value="@ozet?.Id" />
+            <div id="ao-id-hata" class="invalid-feedback"></div>
+        </div>
+        <div class="alan">
+            <label class="form-label" for="ao-yil">Yıl</label>
+            <select id="ao-yil" name="yil" class="form-select">
+                @for (var y = bugun.Year; y >= bugun.Year - RaporDonemleri.GeriyeYil; y--)
+                {
+                    <option value="@y" selected="@(y == Model.Yil)">@y</option>
+                }
+            </select>
+        </div>
+        <div class="alan">
+            <label class="form-label" for="ao-ay">Ay</label>
+            <select id="ao-ay" name="ay" class="form-select">
+                @for (var a = 1; a <= 12; a++)
+                {
+                    <option value="@a" selected="@(a == Model.Ay)">@aylar[a - 1]</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Raporu çalıştır</button>
+    </form>
+</section>
+
+@if (ozet is null)
+{
+    <section class="panel">
+        <partial name="_Bos" model='new BosDurum("chart-bar-horizontal", "Rapor için bir kayıt seçin",
+            "Hesap veya müşteri seçip Raporu çalıştır düğmesine basın. Hesap ve müşteri detayındaki Aylık özet sekmesi de bu rapora bağlanır.")' />
+    </section>
+}
+else
+{
+    <div class="baski-bas">
+        <div><strong>Demo Menkul Değerler A.Ş. (kurgusal)</strong><br />Aylık işlem özeti</div>
+        <div class="text-end">@ozet.Baslik<br />@ozet.AyAdi</div>
+    </div>
+    <section class="panel">
+        <div class="panel-bas">
+            <div>
+                <h2>
+                    <a asp-controller="Musteri" asp-action="Detay" asp-route-id="@ozet.MusteriId">@ozet.MusteriAd</a>@if (ozet.HesapNo is not null)
+                    {
+                        <text>, </text><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@ozet.Id">@ozet.HesapNo</a>
+                    }
+                </h2>
+                <div class="aciklama">@ozet.AyAdi@(musteri ? $", {ozet.HesapSayisi} hesap" : "")</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap baski-gizle">
+                @if (izAcik)
+                {
+                    <button type="button" class="btn btn-ghost btn-sm" data-iz-ac title="Oracle izinde göster"><ikon ad="database" class="ic-16" />@ozet.Paket</button>
+                }
+                <a class="btn btn-outline-secondary btn-sm" href="@csv"><ikon ad="file-csv" class="ic-16" />CSV</a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-yazdir><ikon ad="printer" class="ic-16" />Yazdır</button>
+            </div>
+        </div>
+        @if (ozet.Satirlar.Count > 0)
+        {
+            <div class="panel-govde">
+                <div class="grafik-kap" style="height:@(ozet.Satirlar.Count * 40 + 44)px">
+                    <canvas data-grafik="yatay" role="img" aria-label="İşlem tipine göre toplam tutarlar; değerler aşağıdaki tabloda"
+                            data-veri='@Json.Serialize(ozet.Satirlar.Select(s => new { etiket = Etiketler.IslemEtiketi(s.Tip).Ad, deger = s.Toplam }))'></canvas>
+                </div>
+            </div>
+        }
+        <partial name="_AylikOzetTablo" model="ozet.Satirlar" />
+    </section>
+    <p class="demo-not mt-2">Net bakiye etkisi: giriş tipleri (yatırma, gelen transfer, hisse satımı) toplamından çıkış tipleri çıkarılır. Demo belgesidir.</p>
+}

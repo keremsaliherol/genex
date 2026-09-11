@@ -1,8 +1,16 @@
 @model GenelBakisOzeti
+@using System.Globalization
 @{
     ViewData["Kirinti"] = new List<Kirinti> { new("Genel bakış") };
+    ViewData["Grafik"] = true;
     var bireysel = Model.AktifMusteri - Model.KurumsalMusteri;
     var vadesiz = Model.AcikHesap - Model.YatirimHesabi;
+    var topGiris = Model.NakitAkisi.Sum(g => g.Giris);
+    var topCikis = Model.NakitAkisi.Sum(g => g.Cikis);
+    var enCok = Model.EnAktifMusteriler.Count > 0 ? Model.EnAktifMusteriler.Max(s => s.IslemAdedi) : 1;
+    // Oran çubuğunun genişliği CSS'e gider: kültürden bağımsız ondalık nokta
+    string Genislik(int n) => (n * 100.0 / Math.Max(1, Model.AcikHesap)).ToString("0.##", CultureInfo.InvariantCulture);
+    string Yuzde(int n) => "%" + Math.Round(n * 100.0 / Math.Max(1, Model.AcikHesap)).ToString("0", CultureInfo.InvariantCulture);
 }
 <div class="sayfa-bas">
     <div>
@@ -50,37 +58,131 @@ else
         </div>
     </section>
 
-    <section class="panel" aria-labelledby="son-baslik">
-        <div class="panel-bas">
-            <h2 id="son-baslik">Son işlemler</h2>
-            <span class="aciklama">Transferler iki kayıt olarak görünür: giden ve gelen.</span>
+    <div class="izgara-8-4">
+        <div class="izgara">
+            <section class="panel" aria-labelledby="akis-baslik">
+                <div class="panel-bas">
+                    <div>
+                        <h2 id="akis-baslik">Nakit akışı, son 30 gün</h2>
+                        <div class="aciklama">Günlük para yatırma ve çekme toplamı. Transfer ve hisse işlemleri dahil değil.</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="grafik-lejant">
+                            <span><i style="background:var(--viz-1)"></i>Yatırma @TurkceBicim.ParaKisa(topGiris)</span>
+                            <span><i style="background:var(--viz-neg)"></i>Çekme @TurkceBicim.ParaKisa(topCikis)</span>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm" data-tablo-gorunum aria-pressed="false"><ikon ad="list" class="ic-16" /><span>Tablo</span></button>
+                    </div>
+                </div>
+                <div class="panel-govde" data-grafik-alan>
+                    <div class="grafik-kap">
+                        <canvas data-grafik="akis" role="img"
+                                aria-label="Son 30 günde günlük para yatırma ve çekme; toplam yatırma @TurkceBicim.Para(topGiris), toplam çekme @TurkceBicim.Para(topCikis)"
+                                data-veri='@Json.Serialize(Model.NakitAkisi.Select(g => new { gun = g.Gun.ToString("s"), giris = g.Giris, cikis = g.Cikis }))'></canvas>
+                    </div>
+                </div>
+                <div class="tablo-kap" data-tablo hidden>
+                    <table class="table tablo">
+                        <thead>
+                            <tr>
+                                <th scope="col">Gün</th>
+                                <th scope="col" class="num">Yatırma</th>
+                                <th scope="col" class="num">Çekme</th>
+                                <th scope="col" class="num">Net</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var g in Model.NakitAkisi)
+                            {
+                                <tr>
+                                    <td class="num">@TurkceBicim.Tarih(g.Gun)</td>
+                                    <td class="num"><tutar deger="@g.Giris" /></td>
+                                    <td class="num"><tutar deger="@(-g.Cikis)" /></td>
+                                    <td class="num"><tutar deger="@g.Net" isaretli="true" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="son-baslik">
+                <div class="panel-bas">
+                    <h2 id="son-baslik">Son işlemler</h2>
+                    <span class="aciklama">Transferler iki kayıt olarak görünür: giden ve gelen.</span>
+                </div>
+                <div class="tablo-kap">
+                    <table class="table table-hover tablo">
+                        <thead>
+                            <tr>
+                                <th scope="col">Zaman</th>
+                                <th scope="col">Hesap no</th>
+                                <th scope="col">Müşteri</th>
+                                <th scope="col">İşlem</th>
+                                <th scope="col" class="num">Tutar</th>
+                                <th scope="col">Açıklama</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in Model.SonIslemler)
+                            {
+                                <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
+                                    <td class="num sessiz">@(i.Tarih >= Model.Bugun ? TurkceBicim.Saat(i.Tarih) : TurkceBicim.TarihSaat(i.Tarih))</td>
+                                    <td><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@i.HesapId">@i.HesapNo</a></td>
+                                    <td class="text-truncate" style="max-width:180px">@i.MusteriAd</td>
+                                    <td><islem-tipi deger="@i.Tip" /></td>
+                                    <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
+                                    <td class="sessiz text-truncate" style="max-width:220px">@i.Aciklama</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
-        <div class="tablo-kap">
-            <table class="table table-hover tablo">
-                <thead>
-                    <tr>
-                        <th scope="col">Zaman</th>
-                        <th scope="col">Hesap no</th>
-                        <th scope="col">Müşteri</th>
-                        <th scope="col">İşlem</th>
-                        <th scope="col" class="num">Tutar</th>
-                        <th scope="col">Açıklama</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var i in Model.SonIslemler)
-                    {
-                        <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
-                            <td class="num sessiz">@(i.Tarih >= Model.Bugun ? TurkceBicim.Saat(i.Tarih) : TurkceBicim.TarihSaat(i.Tarih))</td>
-                            <td><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@i.HesapId">@i.HesapNo</a></td>
-                            <td class="text-truncate" style="max-width:200px">@i.MusteriAd</td>
-                            <td><islem-tipi deger="@i.Tip" /></td>
-                            <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
-                            <td class="sessiz text-truncate" style="max-width:240px">@i.Aciklama</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+
+        <div class="izgara">
+            <section class="panel" aria-labelledby="aktif-baslik">
+                <div class="panel-bas">
+                    <div>
+                        <h2 id="aktif-baslik">En aktif müşteriler</h2>
+                        <div class="aciklama">Son 30 gün, işlem adedine göre</div>
+                    </div>
+                </div>
+                @if (Model.EnAktifMusteriler.Count == 0)
+                {
+                    <p class="panel-govde text-secondary m-0">Son 30 günde işlem yok.</p>
+                }
+                else
+                {
+                    <ol class="list-unstyled m-0">
+                        @foreach (var s in Model.EnAktifMusteriler)
+                        {
+                            <li class="d-grid align-items-center gap-2 px-3 py-2@(s.Sira > 1 ? " border-top" : "")" style="grid-template-columns:20px minmax(0,1fr) auto">
+                                <span class="num text-secondary">@s.Sira</span>
+                                <kimlik ad="@s.Ad" tip="@s.MusteriTipi" href="@Url.Action("Detay", "Musteri", new { id = s.Id })" />
+                                <span class="satir-bar"><i style="width:@((int)Math.Round(64.0 * s.IslemAdedi / enCok))px" aria-hidden="true"></i><span class="num">@TurkceBicim.Sayi(s.IslemAdedi)</span></span>
+                            </li>
+                        }
+                    </ol>
+                }
+                <div class="panel-alt"><span>PKG_RAPOR.EN_AKTIF</span><a asp-controller="Rapor" asp-action="EnAktif">Raporda aç</a></div>
+            </section>
+
+            <section class="panel" aria-labelledby="dagilim-baslik">
+                <div class="panel-bas"><h2 id="dagilim-baslik">Açık hesapların dağılımı</h2></div>
+                <div class="panel-govde d-grid gap-3">
+                    <div class="oran-bar" role="img" aria-label="Vadesiz @vadesiz, yatırım @Model.YatirimHesabi">
+                        <i style="width:@Genislik(vadesiz)%;background:var(--viz-1)"></i><i style="width:@Genislik(Model.YatirimHesabi)%;background:var(--viz-2)"></i>
+                    </div>
+                    <dl class="dl-liste">
+                        <dt><span class="grafik-lejant"><span><i style="background:var(--viz-1)"></i>Vadesiz</span></span></dt>
+                        <dd class="num text-end">@TurkceBicim.Sayi(vadesiz) <span class="text-secondary">@Yuzde(vadesiz)</span></dd>
+                        <dt><span class="grafik-lejant"><span><i style="background:var(--viz-2)"></i>Yatırım</span></span></dt>
+                        <dd class="num text-end">@TurkceBicim.Sayi(Model.YatirimHesabi) <span class="text-secondary">@Yuzde(Model.YatirimHesabi)</span></dd>
+                    </dl>
+                </div>
+            </section>
         </div>
-    </section>
+    </div>
 }

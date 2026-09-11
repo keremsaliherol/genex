@@ -1,10 +1,10 @@
 using System.Globalization;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using MusteriHesapYonetimi.Application.Hesaplar;
 using MusteriHesapYonetimi.Application.Islemler;
 using MusteriHesapYonetimi.Application.Musteriler;
 using MusteriHesapYonetimi.Application.Ortak;
+using MusteriHesapYonetimi.Application.Raporlar;
 using MusteriHesapYonetimi.Domain;
 using MusteriHesapYonetimi.Web.Altyapi;
 using MusteriHesapYonetimi.Web.Models;
@@ -12,7 +12,7 @@ using MusteriHesapYonetimi.Web.Models;
 namespace MusteriHesapYonetimi.Web.Controllers;
 
 /// <summary>Hesap ekranları (S5-S7) ve ekstre (S9).</summary>
-public sealed class HesapController(IHesapServisi servis, IMusteriServisi musteriler, IEkstreSorgusu ekstreler) : Controller
+public sealed class HesapController(IHesapServisi servis, IMusteriServisi musteriler, IEkstreSorgusu ekstreler, IRaporSorgusu raporlar) : Controller
 {
     /// <summary>/Hesap/Ekstre: hesap seçimi. /Hesap/Ekstre/{id}?on=gecenay&amp;tip=Yatirma: ekstre.</summary>
     [HttpGet]
@@ -28,22 +28,18 @@ public sealed class HesapController(IHesapServisi servis, IMusteriServisi muster
     {
         if (await ekstreler.OkuAsync(id, filtre, ct) is not { } ekstre) return NotFound();
 
-        var metin = new StringBuilder();
-        metin.AppendLine(Csv.Satir(["ISLEM_ID", "ISLEM_TARIHI", "ISLEM_TIPI", "ACIKLAMA", "KARSI_HESAP_NO", "TUTAR", "BAKIYE"]));
-        foreach (var s in ekstre.Satirlar)
-        {
-            metin.AppendLine(Csv.Satir([
+        string?[] baslik = ["ISLEM_ID", "ISLEM_TARIHI", "ISLEM_TIPI", "ACIKLAMA", "KARSI_HESAP_NO", "TUTAR", "BAKIYE"];
+        return CsvDosyasi.Olustur($"ekstre-{ekstre.HesapNo}-{ekstre.Bas:yyyyMMdd}-{ekstre.Bit:yyyyMMdd}.csv",
+            ekstre.Satirlar.Select(s => new string?[]
+            {
                 s.Id.ToString(CultureInfo.InvariantCulture),
                 TurkceBicim.TarihSaatSaniye(s.Tarih),
                 VeritabaniKodu.Yaz(s.Tip),
                 Csv.Metin(s.Aciklama),
                 s.KarsiHesapNo,
-                s.IsaretliTutar.ToString("0.00", TurkceBicim.Kultur),
-                (s.BakiyeSonra ?? 0).ToString("0.00", TurkceBicim.Kultur)
-            ]));
-        }
-        var icerik = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(metin.ToString())).ToArray();
-        return File(icerik, "text/csv; charset=utf-8", $"ekstre-{ekstre.HesapNo}-{ekstre.Bas:yyyyMMdd}-{ekstre.Bit:yyyyMMdd}.csv");
+                CsvDosyasi.Tutar(s.IsaretliTutar),
+                CsvDosyasi.Tutar(s.BakiyeSonra ?? 0)
+            }).Prepend(baslik));
     }
 
     [HttpGet]
@@ -55,7 +51,16 @@ public sealed class HesapController(IHesapServisi servis, IMusteriServisi muster
     {
         var detay = await servis.DetayAsync(id, ct);
         if (detay is null) return NotFound();
-        ViewData["Sekme"] = sekme == "portfoy" && detay.Hesap.HesapTipi == HesapTipi.Yatirim ? "portfoy" : "hareket";
+        sekme = sekme switch
+        {
+            "portfoy" when detay.Hesap.HesapTipi == HesapTipi.Yatirim => "portfoy",
+            "ozet" => "ozet",
+            _ => "hareket"
+        };
+        ViewData["Sekme"] = sekme;
+        // Aylık özet sekmesi: bu ayın PKG_RAPOR.AYLIK_OZET_HESAP sonucu; tam rapor /Rapor/AylikOzet'te
+        if (sekme == "ozet")
+            ViewData["AylikOzet"] = await raporlar.AylikOzetAsync(RaporKapsami.Hesap, id, DateTime.Today.Year, DateTime.Today.Month, ct);
         return View(detay);
     }
 

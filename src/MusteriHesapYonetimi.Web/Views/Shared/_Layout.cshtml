@@ -9,17 +9,17 @@
         ("Hesap", "Ekstre") => "ekstre",
         ("Hesap", _) => "hesap",
         ("Islem", _) => "islem",
+        ("Rapor", _) => "rapor",
         _ => null
     };
-    // Sonraki fazlarda açılacak modüller menüde görünür ama tıklanmaz
-    var menu = new (string Anahtar, string? Adres, string Ikon, string Ad, string? Faz)[]
+    var menu = new (string Anahtar, string Adres, string Ikon, string Ad)[]
     {
-        ("genel", "/", "squares-four", "Genel bakış", null),
-        ("musteri", "/Musteri", "users", "Müşteriler", null),
-        ("hesap", "/Hesap", "wallet", "Hesaplar", null),
-        ("islem", "/Islem/Yeni", "arrows-left-right", "İşlem yap", null),
-        ("ekstre", "/Hesap/Ekstre", "receipt", "Ekstre", null),
-        ("rapor", null, "chart-line", "Raporlar", "Faz 4")
+        ("genel", "/", "squares-four", "Genel bakış"),
+        ("musteri", "/Musteri", "users", "Müşteriler"),
+        ("hesap", "/Hesap", "wallet", "Hesaplar"),
+        ("islem", "/Islem/Yeni", "arrows-left-right", "İşlem yap"),
+        ("ekstre", "/Hesap/Ekstre", "receipt", "Ekstre"),
+        ("rapor", "/Rapor/AylikOzet", "chart-line", "Raporlar")
     };
     var izGirdileri = OracleIzUzantilari.Girdiler(Context);
     var bildirim = TempData["Bildirim"] as string;
@@ -62,14 +62,7 @@
             <nav class="hm-nav" aria-label="Modüller">
                 @foreach (var m in menu)
                 {
-                    if (m.Adres is null)
-                    {
-                        <span class="yakinda" aria-disabled="true" title="@m.Ad, @m.Faz aşamasında eklenecek"><ikon ad="@m.Ikon" /><span>@m.Ad</span><small>@m.Faz</small></span>
-                    }
-                    else
-                    {
-                        <a href="@m.Adres" title="@m.Ad" aria-current="@(modul == m.Anahtar ? "page" : null)"><ikon ad="@m.Ikon" /><span>@m.Ad</span></a>
-                    }
+                    <a href="@m.Adres" title="@m.Ad" aria-current="@(modul == m.Anahtar ? "page" : null)"><ikon ad="@m.Ikon" /><span>@m.Ad</span></a>
                 }
             </nav>
             <div class="hm-sidebar-foot">
@@ -166,6 +159,12 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/uygulama.js" asp-append-version="true"></script>
+    @if (ViewData["Grafik"] is true)
+    {
+        @* Chart.js yalnız grafikli sayfalarda (genel bakış, aylık özet, bakiye değişimi) *@
+        <script src="~/lib/chart.js/chart.umd.js" asp-append-version="true"></script>
+        <script src="~/js/grafik.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

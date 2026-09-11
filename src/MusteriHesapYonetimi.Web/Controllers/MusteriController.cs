@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using MusteriHesapYonetimi.Application.Musteriler;
+using MusteriHesapYonetimi.Application.Raporlar;
 using MusteriHesapYonetimi.Domain;
 using MusteriHesapYonetimi.Web.Altyapi;
 using MusteriHesapYonetimi.Web.Models;
@@ -7,7 +8,7 @@ using MusteriHesapYonetimi.Web.Models;
 namespace MusteriHesapYonetimi.Web.Controllers;
 
 /// <summary>Müşteri ekranları (S2-S4). İş kuralları serviste; controller yalnız akışı yönetir.</summary>
-public sealed class MusteriController(IMusteriServisi servis) : Controller
+public sealed class MusteriController(IMusteriServisi servis, IRaporSorgusu raporlar) : Controller
 {
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] MusteriFiltre filtre, CancellationToken ct)
@@ -18,7 +19,11 @@ public sealed class MusteriController(IMusteriServisi servis) : Controller
     {
         var detay = await servis.DetayAsync(id, ct);
         if (detay is null) return NotFound();
-        ViewData["Sekme"] = sekme == "islemler" ? "islemler" : "hesaplar";
+        sekme = sekme is "islemler" or "ozet" ? sekme : "hesaplar";
+        ViewData["Sekme"] = sekme;
+        // Aylık özet sekmesi: bu ayın PKG_RAPOR.AYLIK_OZET_MUSTERI sonucu (tüm hesaplar)
+        if (sekme == "ozet")
+            ViewData["AylikOzet"] = await raporlar.AylikOzetAsync(RaporKapsami.Musteri, id, DateTime.Today.Year, DateTime.Today.Month, ct);
         return View(detay);
     }
 

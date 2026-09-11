@@ -1,9 +1,11 @@
 // Web projesinin ön yüz varlıklarını prototipten üretir:
-//   wwwroot/css/theme.css    ← prototype/src/tokens.css + shell.css + components.css (birebir)
-//   wwwroot/icons/sprite.svg ← Web kaynaklarında (cshtml, cs, js) tırnak içinde geçen Phosphor ikon adları
+//   wwwroot/css/theme.css             ← prototype/src/tokens.css + shell.css + components.css (birebir)
+//   wwwroot/icons/sprite.svg          ← Web kaynaklarında (cshtml, cs, js) tırnak içinde geçen Phosphor ikon adları
+//   wwwroot/lib/chart.js/chart.umd.js ← prototype/node_modules/chart.js (sürüm prototype/package.json'da sabit)
 // Gereksinim: prototype/node_modules (prototype klasöründe npm install).
-// Çalıştırma: node tools/on-yuz-varliklari.mjs   (yeni ikon kullanıldığında veya prototip CSS'i değiştiğinde)
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
+// Çalıştırma: node tools/on-yuz-varliklari.mjs   (yeni ikon kullanıldığında, prototip CSS'i veya Chart.js sürümü değiştiğinde)
+// Yeni dosya üretildiyse Web projesi yeniden derlenir: MapStaticAssets dosya listesini derlemede çıkarır.
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync, copyFileSync } from 'node:fs';
 import { join, dirname, extname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,8 +50,19 @@ const semboller = [...adlar].sort().map((ad) => {
 mkdirSync(join(wwwroot, 'icons'), { recursive: true });
 writeFileSync(join(wwwroot, 'icons', 'sprite.svg'), `<svg xmlns="http://www.w3.org/2000/svg">\n${semboller}\n</svg>\n`, 'utf8');
 
-// 4) Metin kuralı (DESIGN.md): arayüzde em/en dash yok
+// 4) Chart.js: UMD paketi (zaten küçültülmüş) ve lisans. Kaynak haritası dağıtılmadığı için başvurusu çıkarılır,
+//    yoksa tarayıcı geliştirici araçları olmayan .map dosyasını ister.
+const chartKlasoru = join(kok, 'prototype', 'node_modules', 'chart.js');
+if (!existsSync(chartKlasoru)) throw new Error('chart.js bulunamadı: önce prototype klasöründe "npm install" çalıştırın.');
+const chartHedef = join(wwwroot, 'lib', 'chart.js');
+mkdirSync(chartHedef, { recursive: true });
+const chartJs = readFileSync(join(chartKlasoru, 'dist', 'chart.umd.js'), 'utf8').replace(/\n\/\/# sourceMappingURL=\S+\s*$/, '\n');
+writeFileSync(join(chartHedef, 'chart.umd.js'), chartJs, 'utf8');
+copyFileSync(join(chartKlasoru, 'LICENSE.md'), join(chartHedef, 'LICENSE.md'));
+const chartSurum = JSON.parse(readFileSync(join(chartKlasoru, 'package.json'), 'utf8')).version;
+
+// 5) Metin kuralı (DESIGN.md): arayüzde em/en dash yok
 const tireler = dosyalar.filter(({ metin }) => /[–—]/.test(metin)).map(({ yol }) => relative(kok, yol));
 if (tireler.length) throw new Error(`em/en dash bulundu: ${tireler.join(', ')}`);
 
-console.log(`theme.css: ${(Buffer.byteLength(tema) / 1024).toFixed(0)} KB | sprite: ${adlar.size} ikon | taranan dosya: ${dosyalar.length}`);
+console.log(`theme.css: ${(Buffer.byteLength(tema) / 1024).toFixed(0)} KB | sprite: ${adlar.size} ikon | chart.js ${chartSurum} | taranan dosya: ${dosyalar.length}`);

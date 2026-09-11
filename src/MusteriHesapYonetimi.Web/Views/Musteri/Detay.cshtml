@@ -84,6 +84,7 @@
         <nav class="sekmeler" aria-label="Müşteri kayıtları">
             <a href="@Url.Action("Detay", new { id = m.MusteriId })" aria-current="@(sekme == "hesaplar" ? "page" : null)">Hesaplar<span class="sayi">@Model.Hesaplar.Count</span></a>
             <a href="@Url.Action("Detay", new { id = m.MusteriId, sekme = "islemler" })" aria-current="@(sekme == "islemler" ? "page" : null)">Son işlemler</a>
+            <a href="@Url.Action("Detay", new { id = m.MusteriId, sekme = "ozet" })" aria-current="@(sekme == "ozet" ? "page" : null)">Aylık özet</a>
         </nav>
 
         @if (sekme == "hesaplar")
@@ -133,6 +134,18 @@
                     </table>
                 </div>
             }
+        }
+        else if (sekme == "ozet")
+        {
+            var ozet = ViewData["AylikOzet"] as AylikOzet;
+            <div class="panel-bas border-0">
+                <div>
+                    <h2>@(ozet?.AyAdi ?? RaporDonemleri.AyAdi(DateTime.Today.Year, DateTime.Today.Month))</h2>
+                    <div class="aciklama">Tüm hesaplar, PKG_RAPOR.AYLIK_OZET_MUSTERI sonucu</div>
+                </div>
+                <a class="btn btn-outline-secondary btn-sm" asp-controller="Rapor" asp-action="AylikOzet" asp-route-kapsam="musteri" asp-route-id="@m.MusteriId">Raporda aç</a>
+            </div>
+            <partial name="_AylikOzetTablo" model="ozet?.Satirlar ?? []" />
         }
         else if (Model.SonIslemler.Count == 0)
         {

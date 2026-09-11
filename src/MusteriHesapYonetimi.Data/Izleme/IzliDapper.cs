@@ -16,30 +16,31 @@ public static class IzliDapper
     public static Task<T?> ExecuteScalarIzliAsync<T>(this IDbConnection baglanti, string baslik, CommandDefinition komut)
         => Izle(baslik, komut, () => baglanti.ExecuteScalarAsync<T>(komut), _ => 1);
 
-    public static Task<List<T>> QueryIzliAsync<T>(this IDbConnection baglanti, string baslik, CommandDefinition komut)
-        => Izle(baslik, komut, async () => (await baglanti.QueryAsync<T>(komut)).AsList(), sonuc => sonuc.Count);
+    /// <param name="not">Panelde komutun altında gösterilen açıklama (ör. paket gövdesinin ne yaptığı).</param>
+    public static Task<List<T>> QueryIzliAsync<T>(this IDbConnection baglanti, string baslik, CommandDefinition komut, string? not = null)
+        => Izle(baslik, komut, async () => (await baglanti.QueryAsync<T>(komut)).AsList(), sonuc => sonuc.Count, not);
 
     public static Task<T> QuerySingleIzliAsync<T>(this IDbConnection baglanti, string baslik, CommandDefinition komut)
         => Izle(baslik, komut, () => baglanti.QuerySingleAsync<T>(komut), _ => 1);
 
-    private static async Task<T> Izle<T>(string baslik, CommandDefinition komut, Func<Task<T>> calistir, Func<T, int?> satir)
+    private static async Task<T> Izle<T>(string baslik, CommandDefinition komut, Func<Task<T>> calistir, Func<T, int?> satir, string? not = null)
     {
         if (OracleIzBaglami.Gecerli is not { } baglam) return await calistir();
         var sure = Stopwatch.StartNew();
         try
         {
             var sonuc = await calistir();
-            baglam.Ekle(Girdi(baslik, komut, sure.Elapsed, satir(sonuc), null));
+            baglam.Ekle(Girdi(baslik, komut, sure.Elapsed, satir(sonuc), null, not));
             return sonuc;
         }
         catch (Exception hata)
         {
-            baglam.Ekle(Girdi(baslik, komut, sure.Elapsed, null, hata));
+            baglam.Ekle(Girdi(baslik, komut, sure.Elapsed, null, hata, not));
             throw;
         }
     }
 
-    private static IzGirdisi Girdi(string baslik, CommandDefinition komut, TimeSpan sure, int? satir, Exception? hata)
+    private static IzGirdisi Girdi(string baslik, CommandDefinition komut, TimeSpan sure, int? satir, Exception? hata, string? not)
     {
         var sql = komut.CommandText.Trim();
         var paket = sql.StartsWith("BEGIN", StringComparison.OrdinalIgnoreCase);
@@ -52,6 +53,7 @@ public static class IzliDapper
             Parametreler = komut.Parameters is OracleParametreleri p ? p.IzListesi() : [],
             SureMs = sure.TotalMilliseconds,
             Satir = satir,
+            Not = not,
             Hata = hata is null ? null : IzDegeri.Hata(hata)
         };
     }

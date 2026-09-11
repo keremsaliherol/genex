@@ -1,14 +1,31 @@
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using MusteriHesapYonetimi.Application.Ozet;
+using MusteriHesapYonetimi.Application.Raporlar;
+using MusteriHesapYonetimi.Data.Izleme;
 using MusteriHesapYonetimi.Domain;
+using Oracle.ManagedDataAccess.Client;
 
 namespace MusteriHesapYonetimi.Data.Ozet;
 
-public sealed class GenelBakisSorgusu(HesapMasasiDbContext db) : IGenelBakisSorgusu
+public sealed class GenelBakisSorgusu(HesapMasasiDbContext db, OracleBaglantiFabrikasi fabrika, IRaporSorgusu raporlar) : IGenelBakisSorgusu
 {
+    // Günlük toplam veritabanında: TRUNC gruplamada, süzgeçte değil; ISLEM_TARIHI >= :bas koşulu IDX_ISLEM_TARIH'i kullanır.
+    private const string NakitAkisiSql = """
+        SELECT TRUNC(ISLEM_TARIHI) AS Gun,
+               SUM(CASE WHEN ISLEM_TIPI = 'YATIRMA' THEN TUTAR ELSE 0 END) AS Giris,
+               SUM(CASE WHEN ISLEM_TIPI = 'CEKME' THEN TUTAR ELSE 0 END) AS Cikis
+          FROM ISLEM
+         WHERE ISLEM_TARIHI >= :bas
+           AND ISLEM_TIPI IN ('YATIRMA', 'CEKME')
+         GROUP BY TRUNC(ISLEM_TARIHI)
+         ORDER BY Gun
+        """;
+
     public async Task<GenelBakisOzeti> OkuAsync(CancellationToken ct = default)
     {
         var bugun = DateTime.Today;
+        var otuzGunOnce = bugun.AddDays(-(NakitAkisi.GunSayisi - 1));
 
         var musteriler = await db.Musteriler
             .TagWith("Aktif müşteriler (tipe göre)")
@@ -29,6 +46,17 @@ public sealed class GenelBakisSorgusu(HesapMasasiDbContext db) : IGenelBakisSorg
         var bugunIslem = await bugunku.TagWith("Bugünkü işlem sayısı").CountAsync(ct);
         var bugunHacim = bugunIslem == 0 ? 0 : await bugunku.TagWith("Bugünkü işlem hacmi").SumAsync(i => i.Tutar, ct);
 
+        List<AkisSatiri> akis;
+        await using (var baglanti = await fabrika.AcAsync(ct))
+        {
+            akis = await baglanti.QueryIzliAsync<AkisSatiri>("Nakit akışı, son 30 gün (günlük yatırma ve çekme)",
+                new CommandDefinition(NakitAkisiSql,
+                    new OracleParametreleri().Girdi("bas", otuzGunOnce, OracleDbType.TimeStamp),
+                    cancellationToken: ct));
+        }
+
+        var enAktif = await raporlar.EnAktifAsync(EnAktifTuru.Musteri, otuzGunOnce, 5, ct);
+
         var sonIslemler = await db.Islemler.AsNoTracking()
             .TagWith("Son işlemler")
             .OrderByDescending(i => i.IslemTarihi).ThenByDescending(i => i.IslemId)
@@ -46,7 +74,16 @@ public sealed class GenelBakisSorgusu(HesapMasasiDbContext db) : IGenelBakisSorg
             ToplamBakiye = hesaplar.Sum(x => x.Bakiye),
             BugunIslem = bugunIslem,
             BugunHacim = bugunHacim,
+            NakitAkisi = NakitAkisi.Doldur(bugun, akis.Select(a => new GunlukAkis(a.Gun, a.Giris, a.Cikis))),
+            EnAktifMusteriler = enAktif,
             SonIslemler = sonIslemler
         };
+    }
+
+    private sealed class AkisSatiri
+    {
+        public DateTime Gun { get; set; }
+        public decimal Giris { get; set; }
+        public decimal Cikis { get; set; }
     }
 }

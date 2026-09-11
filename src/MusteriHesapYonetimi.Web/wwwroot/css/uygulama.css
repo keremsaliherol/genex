@@ -12,23 +12,17 @@ body.iz-yok { --izbar-h: 0px; }
 .iz-istek .mono { color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .iz-not.iz-hata { color: var(--debit); font-family: var(--font-mono); font-size: 12px; }
 
-/* Sonraki fazlarda açılacak modüller: menüde görünür, tıklanmaz */
-.hm-nav .yakinda {
-  display: flex; align-items: center; gap: 10px;
-  height: 36px; padding: 0 10px; border-radius: var(--r-control);
-  color: var(--ink-3); font-weight: 500; cursor: not-allowed; user-select: none;
-}
-.hm-nav .yakinda small {
-  margin-left: auto; font: 500 11px/1.5 var(--font-mono);
-  padding: 0 5px; border: 1px solid var(--line); border-radius: var(--r-badge);
-}
-@media (max-width: 1279.98px) {
-  .hm-nav .yakinda { justify-content: center; padding: 0; }
-  .hm-nav .yakinda > span, .hm-nav .yakinda small { display: none; }
-}
-@media (max-width: 767.98px) {
-  .hm-nav .yakinda { justify-content: flex-start; padding: 0 10px; }
-  .hm-nav .yakinda > span, .hm-nav .yakinda small { display: revert; }
+/* Raporlar: kayıt seçici filtre çubuğunda esner */
+.rapor-secim { flex: 1 1 280px; max-width: 380px; }
+
+/* Grafik ve tablo karşılığı: JS kapalıyken grafik çizilemez, tablo görünür ve geçiş düğmesi gizlenir.
+   Yazdırmada ikisi birlikte basılır. */
+html:not(.js) [data-grafik-alan], html:not(.js) [data-tablo-gorunum] { display: none; }
+html:not(.js) [data-tablo][hidden] { display: block !important; }
+@media print {
+  [data-tablo][hidden] { display: block !important; }
+  [data-grafik-alan][hidden] { display: block !important; }
+  [data-tablo-gorunum] { display: none !important; }
 }
 
 /* 1440 px altında ikincil sütunlar gizlenir; bilgi başka yerde de görünür

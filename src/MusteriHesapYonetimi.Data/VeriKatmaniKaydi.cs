@@ -4,12 +4,14 @@ using MusteriHesapYonetimi.Application.Hesaplar;
 using MusteriHesapYonetimi.Application.Islemler;
 using MusteriHesapYonetimi.Application.Musteriler;
 using MusteriHesapYonetimi.Application.Ozet;
+using MusteriHesapYonetimi.Application.Raporlar;
 using MusteriHesapYonetimi.Application.Sistem;
 using MusteriHesapYonetimi.Data.Hesaplar;
 using MusteriHesapYonetimi.Data.Islemler;
 using MusteriHesapYonetimi.Data.Izleme;
 using MusteriHesapYonetimi.Data.Musteriler;
 using MusteriHesapYonetimi.Data.Ozet;
+using MusteriHesapYonetimi.Data.Raporlar;
 using MusteriHesapYonetimi.Data.Sistem;
 using Oracle.EntityFrameworkCore.Infrastructure;
 
@@ -40,6 +42,7 @@ public static class VeriKatmaniKaydi
         services.AddScoped<IGenelBakisSorgusu, GenelBakisSorgusu>();
         services.AddScoped<IIslemServisi, IslemServisi>();
         services.AddScoped<IEkstreSorgusu, EkstreSorgusu>();
+        services.AddScoped<IRaporSorgusu, RaporSorgusu>();
         return services;
     }
 }
