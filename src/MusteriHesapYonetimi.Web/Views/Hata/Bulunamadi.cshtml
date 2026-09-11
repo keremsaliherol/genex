@@ -1,0 +1,8 @@
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Sayfa bulunamadı") };
+}
+<div class="panel">
+    <partial name="_Bos" model='new BosDurum("compass", "Sayfa bulunamadı",
+        "Adres yanlış yazılmış ya da kayıt artık yok. Menüden devam edebilir veya genel bakışa dönebilirsiniz.",
+        "Genel bakışa dön", "/")' />
+</div>

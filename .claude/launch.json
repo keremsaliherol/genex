@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prototip",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["prototype/serve.mjs"],
+      "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "runtimeArgs": ["run", "--project", "src/MusteriHesapYonetimi.Web", "--urls", "http://localhost:5080"],
+      "port": 5080
+    }
+  ]
+}

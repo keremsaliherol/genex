@@ -1,0 +1,73 @@
+@model HesapAcmaKaydi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Hesaplar", "/Hesap"), new("Hesap aç") };
+    var musteri = ViewData["Musteri"] as Musteri;
+    var hesapNo = ViewData["HesapNo"] as string;
+    var geri = musteri is null ? Url.Action("Index") : Url.Action("Detay", "Musteri", new { id = musteri.MusteriId });
+    var musteriHatali = ViewData.ModelState[nameof(HesapAcmaKaydi.MusteriId)]?.Errors.Count > 0;
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>Hesap aç</h1>
+        <div class="alt"><span>Hesap numarası şube, müşteri no ve ek no ile oluşur.</span></div>
+    </div>
+</div>
+
+<form method="post" class="panel form-dar" id="hf" novalidate>
+    <partial name="_HataOzeti" />
+
+    <div class="alan-grubu">
+        <h2>Hesap sahibi</h2>
+        <div class="alan">
+            <label class="form-label" for="musteri-ara">Müşteri<span class="zorunlu" aria-hidden="true">*</span></label>
+            <div class="secici" data-musteri-secici>
+                <input id="musteri-ara" class="form-control@(musteriHatali ? " input-validation-error" : "")" type="text" autocomplete="off"
+                       role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="musteri-liste" aria-required="true"
+                       aria-describedby="musteri-yardim MusteriId-hata" placeholder="Ad veya müşteri no ile arayın"
+                       value="@musteri?.AdSoyad" data-yerine="MusteriId" />
+                <ul id="musteri-liste" class="secici-liste" role="listbox" aria-label="Müşteriler" hidden></ul>
+            </div>
+            <input type="hidden" asp-for="MusteriId" />
+            <div id="musteri-yardim" class="form-text">Yalnız aktif müşteriler seçilebilir.</div>
+            <span asp-validation-for="MusteriId" id="MusteriId-hata" class="invalid-feedback"></span>
+        </div>
+    </div>
+
+    <div class="alan-grubu">
+        <h2>Hesap</h2>
+        <fieldset>
+            <legend class="form-label">Hesap tipi<span class="zorunlu" aria-hidden="true">*</span></legend>
+            <div class="secim-kartlari">
+                <div class="secim-kart">
+                    <input type="radio" asp-for="Tip" value="Vadesiz" id="htip-v" />
+                    <label for="htip-v"><ikon ad="wallet" /><strong>Vadesiz</strong><span>Para yatırma, çekme ve hesaplar arası transfer.</span></label>
+                </div>
+                <div class="secim-kart">
+                    <input type="radio" asp-for="Tip" value="Yatirim" id="htip-y" />
+                    <label for="htip-y"><ikon ad="chart-line-up" /><strong>Yatırım</strong><span>Bunlara ek olarak hisse alım ve satımı.</span></label>
+                </div>
+            </div>
+        </fieldset>
+        <div class="alan">
+            <label class="form-label" for="hesap-no">Hesap no</label>
+            <input id="hesap-no" class="form-control mono" readonly value="@(hesapNo ?? "Müşteri seçince oluşur")" aria-describedby="hesap-no-yardim" data-hesap-no />
+            <div class="form-text" id="hesap-no-yardim">Şube kodu @HesapNumarasi.SubeKodu, müşteri no ve sıradaki ek no. Kayıtta HESAP_NO olarak yazılır.</div>
+        </div>
+        <div class="alan">
+            <label class="form-label" asp-for="AcilisTutari">Açılış tutarı</label>
+            <div class="giris-grubu" style="max-width:240px">
+                <span class="onek">₺</span>
+                <input asp-for="AcilisTutari" class="form-control tutar-girdi" inputmode="decimal" placeholder="0,00" autocomplete="off"
+                       aria-describedby="AcilisTutari-yardim AcilisTutari-hata" data-tutar-girdi />
+            </div>
+            <div class="form-text" id="AcilisTutari-yardim">İsteğe bağlı. Girilirse "Açılış bakiyesi" açıklamalı bir YATIRMA işlemi oluşur (PKG_ISLEM.YATIR); bakiye trigger ile güncellenir.</div>
+            <span asp-validation-for="AcilisTutari" id="AcilisTutari-hata" class="invalid-feedback"></span>
+        </div>
+    </div>
+
+    <div class="form-eylem-cubugu">
+        <span class="durum-metni">Hesap ve açılış işlemi tek transaction içinde yazılır.</span>
+        <a class="btn btn-ghost" href="@geri">Vazgeç</a>
+        <button type="submit" class="btn btn-primary">Hesabı aç</button>
+    </div>
+</form>

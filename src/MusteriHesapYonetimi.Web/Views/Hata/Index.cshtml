@@ -1,0 +1,33 @@
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Hata") };
+    var baglanti = ViewData["BaglantiHatasi"] as bool? == true;
+}
+<div class="sayfa-bas">
+    <div><h1>Bir şeyler ters gitti</h1></div>
+</div>
+<div class="form-dar">
+    <div class="uyari uyari--hata" role="alert">
+        <ikon ad="warning-circle" />
+        <div>
+            @if (baglanti)
+            {
+                <strong>Veritabanına ulaşılamıyor.</strong>
+                <p>Bağlantıyı kontrol edip tekrar deneyin. Sorun sürerse sistem yöneticisine istek kimliğini iletin.</p>
+            }
+            else
+            {
+                <strong>İstek tamamlanamadı (@ViewData["Kod"]).</strong>
+                <p>Hata kaydedildi. Sorun sürerse sistem yöneticisine istek kimliğini iletin.</p>
+            }
+        </div>
+        <details>
+            <summary>Teknik detay</summary>
+            @if (ViewData["Teknik"] is string teknik)
+            {
+                <code>@teknik</code><br />
+            }
+            <code>İstek kimliği: @ViewData["IstekKimligi"]</code>
+        </details>
+        <div class="eylem"><a class="btn btn-outline-secondary btn-sm" href="/">Genel bakışa dön</a></div>
+    </div>
+</div>

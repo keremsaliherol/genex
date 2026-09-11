@@ -1,0 +1,14 @@
+{
+  "name": "hesap-masasi-prototip",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hesap Masasi arayuz prototipi (ASP.NET Core MVC + Oracle projesinin tiklanabilir demosu)",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@phosphor-icons/core": "2.1.1",
+    "bootstrap": "5.3.3"
+  }
+}

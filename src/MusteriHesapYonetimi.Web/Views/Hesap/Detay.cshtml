@@ -1,0 +1,190 @@
+@model HesapDetay
+@{
+    var h = Model.Hesap;
+    var m = Model.Musteri;
+    var sekme = ViewData["Sekme"] as string ?? "hareket";
+    var yatirim = h.HesapTipi == HesapTipi.Yatirim;
+    ViewData["Kirinti"] = new List<Kirinti> { new("Hesaplar", "/Hesap"), new(h.HesapNo) };
+}
+<div class="sayfa-bas">
+    <div>
+        <h1><span class="mono">@h.HesapNo</span></h1>
+        <div class="alt">
+            <hesap-tipi deger="@h.HesapTipi" />
+            <durum aktif="@h.Aktif" />
+            <a asp-controller="Musteri" asp-action="Detay" asp-route-id="@m.MusteriId">@m.AdSoyad</a>
+            <span class="mono">@m.MusteriNo</span>
+            @if (!m.Aktif)
+            {
+                <span class="rozet rozet--uyari">Müşteri pasif</span>
+            }
+        </div>
+    </div>
+    <div class="sayfa-eylem">
+        <button type="button" class="btn btn-outline-secondary" data-kopyala="@h.HesapNo"><ikon ad="copy" class="ic-16" />Hesap no kopyala</button>
+        <div class="dropdown">
+            <button type="button" class="btn btn-ghost btn-icon" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Diğer eylemler"><ikon ad="dots-three-vertical" /></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" asp-action="Index" asp-route-musteriId="@m.MusteriId"><ikon ad="wallet" />Müşterinin hesapları</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                @if (Model.PasifeAlmaEngeli is null)
+                {
+                    <li>
+                        <form method="post" asp-action="PasifeAl" asp-route-id="@h.HesapId" data-onay="Hesap pasife alınsın mı?"
+                              data-onay-metin="@h.HesapNo pasife alınacak. Hareket geçmişi korunur, yeni işlem yapılamaz." data-onay-dugme="Pasife al">
+                            <button type="submit" class="dropdown-item"><ikon ad="prohibit" />Hesabı pasife al</button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li>
+                        <button type="button" class="dropdown-item" disabled aria-describedby="pasif-engel"><ikon ad="prohibit" />Hesabı pasife al</button>
+                        <p class="form-text px-3 mb-1" id="pasif-engel" style="max-width:260px">@Model.PasifeAlmaEngeli</p>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="izgara-3-9">
+    <div class="izgara">
+        <section class="panel" aria-labelledby="bakiye-baslik">
+            <div class="panel-govde d-grid gap-3">
+                <div class="bakiye-blok">
+                    <span class="etiket" id="bakiye-baslik">Bakiye</span>
+                    <span class="deger">@TurkceBicim.Para(h.Bakiye)</span>
+                    <span class="ek"><span class="w-100">Son 30 gün</span><tutar deger="@Model.Giris30" isaretli="true" /><tutar deger="@(-Model.Cikis30)" isaretli="true" /></span>
+                </div>
+                <div>
+                    <partial name="_BakiyeCizgisi" model="Model.BakiyeGecmisi" />
+                    <div class="form-text mt-1">Son 90 gün, her işlemden sonraki bakiye</div>
+                </div>
+            </div>
+        </section>
+        <section class="panel" aria-labelledby="hb-baslik">
+            <div class="panel-bas"><h2 id="hb-baslik">Hesap bilgileri</h2></div>
+            <div class="panel-govde">
+                <dl class="dl-liste">
+                    <dt>Hesap tipi</dt><dd>@Etiketler.HesapTipiEtiketi(h.HesapTipi).Ad</dd>
+                    <dt>Açılış tarihi</dt><dd class="num">@TurkceBicim.Tarih(h.AcilisTarihi)</dd>
+                    <dt>Şube kodu</dt><dd class="num">@HesapNumarasi.SubeKodu</dd>
+                    <dt>Ek no</dt><dd class="num">@h.EkNo.ToString("00")</dd>
+                    <dt>Toplam hareket</dt><dd class="num">@TurkceBicim.Sayi(Model.ToplamHareket)</dd>
+                </dl>
+            </div>
+        </section>
+    </div>
+
+    <section class="panel">
+        <nav class="sekmeler" aria-label="Hesap kayıtları">
+            <a href="@Url.Action("Detay", new { id = h.HesapId })" aria-current="@(sekme == "hareket" ? "page" : null)">Hareketler</a>
+            @if (yatirim)
+            {
+                <a href="@Url.Action("Detay", new { id = h.HesapId, sekme = "portfoy" })" aria-current="@(sekme == "portfoy" ? "page" : null)">Portföy<span class="sayi">@Model.Portfoy.Count</span></a>
+            }
+        </nav>
+
+        @if (sekme == "hareket")
+        {
+            if (Model.SonHareketler.Count == 0)
+            {
+                <partial name="_Bos" model='new BosDurum("receipt", "Henüz hareket yok", "İlk işlemle birlikte hareketler burada listelenir.")' />
+            }
+            else
+            {
+                <div class="tablo-kap">
+                    <table class="table table-hover tablo">
+                        <thead>
+                            <tr>
+                                <th scope="col">Zaman</th>
+                                <th scope="col">İşlem</th>
+                                <th scope="col">Açıklama</th>
+                                <th scope="col" class="genis">Karşı hesap</th>
+                                <th scope="col" class="num">Tutar</th>
+                                <th scope="col" class="num">Bakiye</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in Model.SonHareketler)
+                            {
+                                <tr>
+                                    <td class="num sessiz">@TurkceBicim.TarihSaat(i.Tarih)</td>
+                                    <td><islem-tipi deger="@i.Tip" /></td>
+                                    <td class="text-truncate" style="max-width:200px">@i.Aciklama</td>
+                                    <td class="genis">
+                                        @if (i.KarsiHesapId is { } karsi)
+                                        {
+                                            <a class="mono" asp-action="Detay" asp-route-id="@karsi">@i.KarsiHesapNo</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary">Yok</span>
+                                        }
+                                    </td>
+                                    <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
+                                    <td class="num"><tutar deger="@(i.BakiyeSonra ?? 0)" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-alt">
+                    <span>Son @Model.SonHareketler.Count hareket; bakiye sütunu güncel bakiyeden geriye hesaplanır.</span>
+                    <span>Toplam @TurkceBicim.Sayi(Model.ToplamHareket) hareket</span>
+                </div>
+            }
+        }
+        else if (Model.Portfoy.Count == 0)
+        {
+            <partial name="_Bos" model='new BosDurum("chart-line-up", "Portföy boş", "Bu yatırım hesabında açık hisse pozisyonu yok.")' />
+        }
+        else
+        {
+            var toplamDeger = Model.Portfoy.Sum(p => p.PiyasaDegeri);
+            var toplamKarZarar = Model.Portfoy.Sum(p => p.KarZarar);
+            <div class="tablo-kap">
+                <table class="table tablo">
+                    <thead>
+                        <tr>
+                            <th scope="col">Hisse</th>
+                            <th scope="col" class="num">Adet</th>
+                            <th scope="col" class="num">Ort. maliyet</th>
+                            <th scope="col" class="num">Temsili fiyat</th>
+                            <th scope="col" class="num">Piyasa değeri</th>
+                            <th scope="col" class="num">Kâr/zarar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Portfoy)
+                        {
+                            <tr>
+                                <td><span class="mono fw-semibold">@p.HisseKodu</span> <span class="text-secondary">@p.HisseAd</span></td>
+                                <td class="num">@TurkceBicim.Sayi(p.NetAdet)</td>
+                                <td class="num">@TurkceBicim.Para(p.OrtMaliyet)</td>
+                                <td class="num">@TurkceBicim.Para(p.TemsiliFiyat)</td>
+                                <td class="num">@TurkceBicim.Para(p.PiyasaDegeri)</td>
+                                <td class="num">
+                                    <tutar deger="@p.KarZarar" isaretli="true" />
+                                    @if (p.KarZararYuzde is { } yuzde)
+                                    {
+                                        <span class="text-secondary">%@(yuzde < 0 ? TurkceBicim.Eksi : "")@Math.Abs(yuzde).ToString("N1", TurkceBicim.Kultur)</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">Toplam</td>
+                            <td class="num">@TurkceBicim.Para(toplamDeger)</td>
+                            <td class="num"><tutar deger="@toplamKarZarar" isaretli="true" /></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="panel-alt"><span>Fiyatlar temsilidir; gerçek piyasa verisi kullanılmaz. VW_PORTFOY görünümünden okunur.</span></div>
+        }
+    </section>
+</div>

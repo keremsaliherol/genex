@@ -1,0 +1,5 @@
+# Metin dosyaları depoda LF, çalışma kopyasında işletim sisteminin satır sonuyla
+* text=auto
+
+*.png binary
+*.woff2 binary

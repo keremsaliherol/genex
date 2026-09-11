@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MusteriHesapYonetimi.Application/MusteriHesapYonetimi.Application.csproj" />
+    <Project Path="src/MusteriHesapYonetimi.Data/MusteriHesapYonetimi.Data.csproj" />
+    <Project Path="src/MusteriHesapYonetimi.Domain/MusteriHesapYonetimi.Domain.csproj" />
+    <Project Path="src/MusteriHesapYonetimi.Web/MusteriHesapYonetimi.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MusteriHesapYonetimi.Tests/MusteriHesapYonetimi.Tests.csproj" />
+  </Folder>
+</Solution>

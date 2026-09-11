@@ -1,0 +1,163 @@
+@model MusteriDetay
+@{
+    var m = Model.Musteri;
+    var sekme = ViewData["Sekme"] as string ?? "hesaplar";
+    ViewData["Kirinti"] = new List<Kirinti> { new("Müşteriler", "/Musteri"), new(m.AdSoyad) };
+    var acik = Model.Hesaplar.Count(h => h.Aktif);
+    var pasif = Model.Hesaplar.Count - acik;
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>@m.AdSoyad</h1>
+        <div class="alt">
+            <span class="no-kopya">@m.MusteriNo<button type="button" class="btn btn-ghost btn-sm btn-icon" data-kopyala="@m.MusteriNo" aria-label="Müşteri no kopyala" title="Kopyala"><ikon ad="copy" class="ic-14" /></button></span>
+            <musteri-tipi deger="@m.MusteriTipi" />
+            <durum aktif="@m.Aktif" />
+        </div>
+    </div>
+    <div class="sayfa-eylem">
+        <a class="btn btn-outline-secondary" asp-action="Duzenle" asp-route-id="@m.MusteriId"><ikon ad="pencil-simple" class="ic-16" />Düzenle</a>
+        @if (m.Aktif)
+        {
+            <a class="btn btn-primary" asp-controller="Hesap" asp-action="Yeni" asp-route-musteriId="@m.MusteriId"><ikon ad="plus" class="ic-16" />Hesap aç</a>
+        }
+        else
+        {
+            <button type="button" class="btn btn-primary" disabled title="Pasif müşteriye hesap açılamaz">Hesap aç</button>
+        }
+        <div class="dropdown">
+            <button type="button" class="btn btn-ghost btn-icon" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Diğer eylemler"><ikon ad="dots-three-vertical" /></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                @if (!m.Aktif)
+                {
+                    <li>
+                        <form method="post" asp-action="Aktiflestir" asp-route-id="@m.MusteriId">
+                            <button type="submit" class="dropdown-item"><ikon ad="arrow-counter-clockwise" />Aktifleştir</button>
+                        </form>
+                    </li>
+                }
+                else if (Model.PasifeAlmaEngeli is null)
+                {
+                    <li>
+                        <form method="post" asp-action="PasifeAl" asp-route-id="@m.MusteriId" data-onay="Müşteri pasife alınsın mı?"
+                              data-onay-metin="@m.AdSoyad pasife alınacak. Kayıt silinmez; hesaplar ve işlem geçmişi korunur, yeni işlem yapılamaz." data-onay-dugme="Pasife al">
+                            <button type="submit" class="dropdown-item"><ikon ad="prohibit" />Pasife al</button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li>
+                        <button type="button" class="dropdown-item" disabled aria-describedby="pasif-engel"><ikon ad="prohibit" />Pasife al</button>
+                        <p class="form-text px-3 mb-1" id="pasif-engel" style="max-width:260px">@Model.PasifeAlmaEngeli</p>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="izgara-3-9">
+    <section class="panel" aria-labelledby="bilgi-baslik">
+        <div class="panel-bas"><h2 id="bilgi-baslik">Müşteri bilgileri</h2></div>
+        <div class="panel-govde d-grid gap-3">
+            <div class="bakiye-blok">
+                <span class="etiket">Toplam bakiye</span>
+                <span class="deger">@TurkceBicim.Para(Model.ToplamBakiye)</span>
+                <span class="ek"><span>@acik açık, @pasif pasif hesap</span></span>
+            </div>
+            <dl class="dl-liste">
+                <dt>Müşteri no</dt><dd class="num">@m.MusteriNo</dd>
+                <dt>Müşteri tipi</dt><dd>@Etiketler.MusteriTipiEtiketi(m.MusteriTipi).Ad</dd>
+                <dt>E-posta</dt>
+                <dd>@if (m.Eposta is null) { <span class="text-secondary">Girilmemiş</span> } else { <a href="mailto:@m.Eposta">@m.Eposta</a> }</dd>
+                <dt>Telefon</dt>
+                <dd class="num">@if (m.Telefon is null) { <span class="text-secondary">Girilmemiş</span> } else { @m.Telefon }</dd>
+                <dt>Kayıt tarihi</dt><dd class="num">@TurkceBicim.Tarih(m.KayitTarihi)</dd>
+                <dt>Son işlem</dt>
+                <dd class="num">@if (Model.SonIslemTarihi is { } son) { @TurkceBicim.TarihSaat(son) } else { <span class="text-secondary">Yok</span> }</dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="panel">
+        <nav class="sekmeler" aria-label="Müşteri kayıtları">
+            <a href="@Url.Action("Detay", new { id = m.MusteriId })" aria-current="@(sekme == "hesaplar" ? "page" : null)">Hesaplar<span class="sayi">@Model.Hesaplar.Count</span></a>
+            <a href="@Url.Action("Detay", new { id = m.MusteriId, sekme = "islemler" })" aria-current="@(sekme == "islemler" ? "page" : null)">Son işlemler</a>
+        </nav>
+
+        @if (sekme == "hesaplar")
+        {
+            if (Model.Hesaplar.Count == 0)
+            {
+                <partial name="_Bos" model='new BosDurum("wallet", "Bu müşterinin hesabı yok",
+                    "Vadesiz veya yatırım hesabı açarak işlem yapmaya başlayabilirsiniz.",
+                    m.Aktif ? "Hesap aç" : null, m.Aktif ? Url.Action("Yeni", "Hesap", new { musteriId = m.MusteriId }) : null)' />
+            }
+            else
+            {
+                <div class="tablo-kap">
+                    <table class="table table-hover tablo">
+                        <thead>
+                            <tr>
+                                <th scope="col">Hesap no</th>
+                                <th scope="col">Tip</th>
+                                <th scope="col" class="num">Bakiye</th>
+                                <th scope="col">Açılış</th>
+                                <th scope="col">Son hareket</th>
+                                <th scope="col">Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var h in Model.Hesaplar)
+                            {
+                                var adres = Url.Action("Detay", "Hesap", new { id = h.Id });
+                                <tr class="tiklanir" data-href="@adres">
+                                    <td><a class="mono" href="@adres">@h.HesapNo</a></td>
+                                    <td><hesap-tipi deger="@h.Tip" /></td>
+                                    <td class="num"><tutar deger="@h.Bakiye" /></td>
+                                    <td class="num sessiz">@TurkceBicim.Tarih(h.AcilisTarihi)</td>
+                                    <td class="num sessiz">@(h.SonHareket is { } t ? TurkceBicim.Tarih(t) : "Yok")</td>
+                                    <td><durum aktif="@h.Aktif" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+        else if (Model.SonIslemler.Count == 0)
+        {
+            <partial name="_Bos" model='new BosDurum("receipt", "Henüz işlem yok", "Bu müşterinin hesaplarında kayıtlı hareket bulunmuyor.")' />
+        }
+        else
+        {
+            <div class="tablo-kap">
+                <table class="table table-hover tablo">
+                    <thead>
+                        <tr>
+                            <th scope="col">Zaman</th>
+                            <th scope="col">Hesap no</th>
+                            <th scope="col">İşlem</th>
+                            <th scope="col" class="num">Tutar</th>
+                            <th scope="col">Açıklama</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var i in Model.SonIslemler)
+                        {
+                            <tr>
+                                <td class="num sessiz">@TurkceBicim.TarihSaat(i.Tarih)</td>
+                                <td><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@i.HesapId">@i.HesapNo</a></td>
+                                <td><islem-tipi deger="@i.Tip" /></td>
+                                <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
+                                <td class="sessiz text-truncate" style="max-width:260px">@i.Aciklama</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-alt"><span>Tüm hesaplardaki son @Model.SonIslemler.Count işlem</span></div>
+        }
+    </section>
+</div>

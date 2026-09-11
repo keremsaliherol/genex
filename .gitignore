@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+
+# Node (prototip)
+node_modules/
+# Prototipin derleme çıktısı (node prototype/build.mjs üretir)
+prototype/dist/
+
+# Genex'in paylaştığı proje şartnamesi: açık depoya konması için izin netleşene kadar dışarıda
+musteri_hesap_yonetim_proje_speq.md
+
+# Yerel geliştirme notları: CLAUDE.md veritabanı şifreleri içeriyor (bkz. dosyadaki uyarı).
+# Git'e alınacaksa önce şifreler çıkarılmalı; o zamana kadar dışarıda kalır.
+CLAUDE.md
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Gizli bilgiler
+*.env
+appsettings.*.local.json

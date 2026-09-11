@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MusteriHesapYonetimi.Domain\MusteriHesapYonetimi.Domain.csproj" />
+    <ProjectReference Include="..\MusteriHesapYonetimi.Application\MusteriHesapYonetimi.Application.csproj" />
+    <ProjectReference Include="..\MusteriHesapYonetimi.Data\MusteriHesapYonetimi.Data.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>60ca70c6-76cc-4d49-a1c5-57dbfa1e6897</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

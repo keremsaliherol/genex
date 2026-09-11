@@ -1,0 +1,31 @@
+@using System.Globalization
+@model IReadOnlyList<BakiyeNoktasi>
+@*
+    Basamaklı bakiye çizgisi, sunucuda SVG olarak çizilir (grafik kütüphanesi gerekmez).
+    Bakiye yalnız işlem anında değişir: her nokta önce yatay, sonra dikey çizgiyle bağlanır. Taban sıfırdır.
+*@
+@{
+    const double Genislik = 300, Yukseklik = 72, Bosluk = 3;
+    var bas = Model[0].Zaman;
+    var sure = Math.Max(1, (Model[^1].Zaman - bas).TotalSeconds);
+    var alt = Math.Min(0m, Model.Min(n => n.Bakiye));
+    var ust = Model.Max(n => n.Bakiye);
+    if (ust == alt) ust = alt + 1;
+
+    // SVG yolu kültürden bağımsız yazılır: tr-TR'de ondalık virgül yolu bozar
+    string S(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+    double X(DateTime t) => (t - bas).TotalSeconds / sure * Genislik;
+    double Y(decimal b) => Bosluk + (double)((ust - b) / (ust - alt)) * (Yukseklik - 2 * Bosluk);
+
+    var yol = new System.Text.StringBuilder($"M0,{S(Y(Model[0].Bakiye))}");
+    foreach (var n in Model.Skip(1)) yol.Append($" H{S(X(n.Zaman))} V{S(Y(n.Bakiye))}");
+    var cizgi = yol.ToString();
+    var alan = $"{cizgi} V{S(Yukseklik)} H0 Z";
+    var enYuksek = Model.Max(n => n.Bakiye);
+    var enDusuk = Model.Min(n => n.Bakiye);
+}
+<svg class="bakiye-cizgisi" viewBox="0 0 300 72" preserveAspectRatio="none" role="img"
+     aria-label="Son 90 günde bakiye: başlangıç @TurkceBicim.Para(Model[0].Bakiye), bugün @TurkceBicim.Para(Model[^1].Bakiye), en yüksek @TurkceBicim.Para(enYuksek), en düşük @TurkceBicim.Para(enDusuk)">
+    <path class="alan" d="@alan" />
+    <path class="cizgi" d="@cizgi" vector-effect="non-scaling-stroke" />
+</svg>

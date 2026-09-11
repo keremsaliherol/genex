@@ -1,0 +1,160 @@
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider Surum
+@{
+    var kirintilar = ViewData["Kirinti"] as IReadOnlyList<Kirinti> ?? [];
+    var baslik = kirintilar.Count > 0 ? kirintilar[^1].Ad : "Genel bakış";
+    var modul = (ViewContext.RouteData.Values["controller"] as string) switch
+    {
+        "Home" => "genel",
+        "Musteri" => "musteri",
+        "Hesap" => "hesap",
+        _ => null
+    };
+    // Sonraki fazlarda açılacak modüller menüde görünür ama tıklanmaz
+    var menu = new (string Anahtar, string? Adres, string Ikon, string Ad, string? Faz)[]
+    {
+        ("genel", "/", "squares-four", "Genel bakış", null),
+        ("musteri", "/Musteri", "users", "Müşteriler", null),
+        ("hesap", "/Hesap", "wallet", "Hesaplar", null),
+        ("islem", null, "arrows-left-right", "İşlem yap", "Faz 3"),
+        ("ekstre", null, "receipt", "Ekstre", "Faz 3"),
+        ("rapor", null, "chart-line", "Raporlar", "Faz 4")
+    };
+    var bildirim = TempData["Bildirim"] as string;
+    var bildirimHata = TempData["BildirimTur"] as string == "hata";
+    var geriAl = TempData["BildirimGeriAl"] as string;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@baslik | Hesap Masası</title>
+    <script>
+        // Tema tercihi boyamadan önce uygulanır; açık ve koyu arasında yanıp sönme olmaz.
+        (function () {
+            var r = document.documentElement, t = null;
+            r.classList.add('js');
+            try { t = localStorage.getItem('hm-tema'); } catch (e) { t = null; }
+            if (t === 'acik') r.setAttribute('data-theme', 'light');
+            else if (t === 'koyu') r.setAttribute('data-theme', 'dark');
+            var d = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            r.setAttribute('data-bs-theme', d);
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/uygulama.css" asp-append-version="true" />
+</head>
+<body class="iz-yok" data-sprite="@Surum.AddFileVersionToPath(Context.Request.PathBase, IkonluTagHelper.SpriteYolu)">
+    <a class="skip-link" href="#icerik">İçeriğe atla</a>
+    <div class="hm-shell" id="kabuk">
+        <aside class="hm-sidebar" id="yan-menu" aria-label="Ana menü">
+            <a class="hm-brand" href="/" aria-label="Hesap Masası, genel bakış">
+                <span class="hm-brand-mark"><ikon ad="vault" /></span>
+                <span class="hm-brand-name">Hesap Masası<small>Müşteri ve hesap yönetimi</small></span>
+            </a>
+            <nav class="hm-nav" aria-label="Modüller">
+                @foreach (var m in menu)
+                {
+                    if (m.Adres is null)
+                    {
+                        <span class="yakinda" aria-disabled="true" title="@m.Ad, @m.Faz aşamasında eklenecek"><ikon ad="@m.Ikon" /><span>@m.Ad</span><small>@m.Faz</small></span>
+                    }
+                    else
+                    {
+                        <a href="@m.Adres" title="@m.Ad" aria-current="@(modul == m.Anahtar ? "page" : null)"><ikon ad="@m.Ikon" /><span>@m.Ad</span></a>
+                    }
+                }
+            </nav>
+            <div class="hm-sidebar-foot">
+                <div class="hm-baglanti" title="Oracle Database, FREEPDB1 servisi, HESAP şeması">
+                    <span class="hm-dot" aria-hidden="true"></span><span class="metin">FREEPDB1 · HESAP</span>
+                </div>
+                <div class="metin">Demo verisi, kurgusal</div>
+            </div>
+        </aside>
+        <div class="hm-backdrop" id="menu-perde" hidden></div>
+        <div class="hm-main">
+            <header class="hm-topbar">
+                <button type="button" class="btn btn-ghost btn-icon hm-menu-btn" id="menu-dugme" aria-controls="yan-menu" aria-expanded="false" aria-label="Menüyü aç"><ikon ad="list" /></button>
+                <nav class="hm-crumbs" aria-label="Konum">
+                    <ol>
+                        <li><a href="/">Hesap Masası</a></li>
+                        @for (var i = 0; i < kirintilar.Count; i++)
+                        {
+                            if (i == kirintilar.Count - 1 || kirintilar[i].Adres is null)
+                            {
+                                <li aria-current="@(i == kirintilar.Count - 1 ? "page" : null)">@kirintilar[i].Ad</li>
+                            }
+                            else
+                            {
+                                <li><a href="@kirintilar[i].Adres">@kirintilar[i].Ad</a></li>
+                            }
+                        }
+                    </ol>
+                </nav>
+                <div class="hm-search" role="search">
+                    <ikon ad="magnifying-glass" />
+                    <label class="visually-hidden" for="genel-arama">Müşteri veya hesap ara</label>
+                    <input id="genel-arama" class="form-control" type="search" placeholder="Müşteri adı, müşteri no, hesap no" autocomplete="off"
+                           role="combobox" aria-expanded="false" aria-controls="arama-sonuc" aria-autocomplete="list" />
+                    <kbd>Ctrl K</kbd>
+                    <div class="hm-search-results" id="arama-sonuc" role="listbox" aria-label="Arama sonuçları" hidden></div>
+                </div>
+                <div class="hm-top-eylem">
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-ghost" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Kullanıcı menüsü">
+                            <span class="hm-avatar" aria-hidden="true">AD</span><span class="etiket">admin</span><ikon ad="caret-down" class="ic-14" />
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="min-width:250px">
+                            <li class="px-3 py-2"><div class="fw-semibold">admin</div><div class="form-text m-0">Oturum açma Faz 5'te (ASP.NET Core Identity)</div></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li><h3 class="dropdown-header">Görünüm</h3></li>
+                            <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="sistem">Sistem<ikon ad="check" class="ic-16 tik" /></button></li>
+                            <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="acik">Açık<ikon ad="check" class="ic-16 tik" /></button></li>
+                            <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="koyu">Koyu<ikon ad="check" class="ic-16 tik" /></button></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+            <main id="icerik" class="hm-content" tabindex="-1">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <div class="toast-alani" id="toast-alani" aria-live="polite">
+        @if (bildirim is not null)
+        {
+            <div class="toast" role="status" data-otomatik data-bs-delay="@(geriAl is null ? 4000 : 6000)">
+                <div class="toast-body">
+                    <ikon ad="@(bildirimHata ? "warning-circle" : "check-circle")" class="@(bildirimHata ? "ic-hata" : null)" />
+                    <span class="flex-grow-1">@bildirim</span>
+                    @if (geriAl is not null)
+                    {
+                        <form method="post" action="@geriAl" asp-antiforgery="true"><button type="submit" class="btn btn-ghost btn-sm">Geri al</button></form>
+                    }
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Kapat"></button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="modal fade" id="onay-modal" tabindex="-1" aria-labelledby="onay-baslik" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h2 class="modal-title" id="onay-baslik"></h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
+                <div class="modal-body"><p class="mb-0" id="onay-metin"></p></div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button><button type="button" class="btn btn-danger" data-onayla></button></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/uygulama.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

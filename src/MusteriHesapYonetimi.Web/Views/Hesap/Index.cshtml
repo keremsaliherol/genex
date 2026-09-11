@@ -1,0 +1,106 @@
+@model HesapListeSayfasi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Hesaplar") };
+    var f = Model.Filtre;
+    var liste = Model.Liste;
+    var s = liste.Sayfa;
+    var seciliTip = f.Tip?.ToString().ToLowerInvariant() ?? "";
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>Hesaplar</h1>
+        <div class="alt"><span data-canli-sayac>@TurkceBicim.Sayi(s.Toplam) hesap</span></div>
+    </div>
+    <div class="sayfa-eylem">
+        <a class="btn btn-primary" asp-action="Yeni" asp-route-musteriId="@f.MusteriId"><ikon ad="plus" class="ic-16" />Hesap aç</a>
+    </div>
+</div>
+
+<section class="panel">
+    <form method="get" asp-action="Index" class="filtre-cubugu" role="search" data-canli-form>
+        @if (f.Sirala != HesapSiralama.No) { <input type="hidden" name="sirala" value="@f.Sirala.ToString().ToLowerInvariant()" /> }
+        @if (f.Yon != SiralamaYonu.Artan) { <input type="hidden" name="yon" value="azalan" /> }
+        @if (f.Boyut != Sayfalama.VarsayilanBoyut) { <input type="hidden" name="boyut" value="@f.Boyut" /> }
+        @if (f.MusteriId is not null) { <input type="hidden" name="musteriId" value="@f.MusteriId" /> }
+        <div class="arama">
+            <ikon ad="magnifying-glass" class="ic-16" />
+            <label class="visually-hidden" for="h-ara">Hesap ara</label>
+            <input id="h-ara" name="q" class="form-control" type="search" placeholder="Hesap no veya müşteri adı" value="@f.Q" autocomplete="off" data-canli-arama />
+        </div>
+        <div class="segment" role="radiogroup" aria-label="Hesap tipi">
+            @foreach (var (deger, ad, i) in new[] { ("", "Tümü", 0), ("vadesiz", "Vadesiz", 1), ("yatirim", "Yatırım", 2) })
+            {
+                <input type="radio" name="tip" id="h-tip-@i" value="@deger" checked="@(seciliTip == deger)" /><label for="h-tip-@i">@ad</label>
+            }
+        </div>
+        <label class="visually-hidden" for="h-durum">Durum</label>
+        <select id="h-durum" name="durum" class="form-select">
+            <option value="" selected="@(f.Durum == DurumFiltresi.Aktif)">Açık hesaplar</option>
+            <option value="pasif" selected="@(f.Durum == DurumFiltresi.Pasif)">Pasif hesaplar</option>
+            <option value="tumu" selected="@(f.Durum == DurumFiltresi.Tumu)">Tüm durumlar</option>
+        </select>
+        @if (f.MusteriId is not null)
+        {
+            <span class="rozet rozet--vurgu filtre-cip">
+                Müşteri: @(liste.MusteriAd ?? "bulunamadı")
+                <a href="@SorguDizesi.Degistir(Context.Request, ("musteriId", null), ("sayfa", null))" aria-label="Müşteri filtresini kaldır"><ikon ad="x" class="ic-14" /></a>
+            </span>
+        }
+        <button type="submit" class="btn btn-outline-secondary btn-sm" data-js-gizle>Uygula</button>
+        <a class="btn btn-ghost btn-sm ms-auto" asp-action="Index">Filtreleri temizle</a>
+    </form>
+
+    <div data-canli-kap>
+        @if (s.Toplam == 0)
+        {
+            if (f.FiltreVar)
+            {
+                <partial name="_Bos" model='new BosDurum("wallet", "Bu filtrelerle hesap yok",
+                    "Aramayı değiştirin veya başka bir hesap tipi seçin.", "Filtreleri temizle", Url.Action("Index"), EylemBirincil: false)' />
+            }
+            else
+            {
+                <partial name="_Bos" model='new BosDurum("wallet", "Henüz hesap yok",
+                    "Bir müşteri seçip vadesiz veya yatırım hesabı açın.", "Hesap aç", Url.Action("Yeni"))' />
+            }
+        }
+        else
+        {
+            <div class="tablo-kap">
+                <table class="table table-hover tablo">
+                    <thead>
+                        <tr>
+                            <th sirala="No" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon">Hesap no</th>
+                            <th sirala="Musteri" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon">Müşteri</th>
+                            <th scope="col">Tip</th>
+                            <th sirala="Bakiye" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon" sirala-ilk="Azalan" class="num">Bakiye</th>
+                            <th sirala="Acilis" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon" sirala-ilk="Azalan">Açılış</th>
+                            <th sirala="Son" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon" sirala-ilk="Azalan">Son hareket</th>
+                            <th scope="col">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var h in s.Ogeler)
+                        {
+                            var adres = Url.Action("Detay", new { id = h.Id });
+                            <tr class="tiklanir" data-href="@adres">
+                                <td><a class="mono" href="@adres">@h.HesapNo</a></td>
+                                <td><kimlik ad="@h.MusteriAd" tip="@h.MusteriTipi" href="@Url.Action("Detay", "Musteri", new { id = h.MusteriId })" /></td>
+                                <td><hesap-tipi deger="@h.Tip" /></td>
+                                <td class="num"><tutar deger="@h.Bakiye" /></td>
+                                <td class="num sessiz">@TurkceBicim.Tarih(h.AcilisTarihi)</td>
+                                <td class="num sessiz">@(h.SonHareket is { } t ? TurkceBicim.Tarih(t) : "Yok")</td>
+                                <td><durum aktif="@h.Aktif" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-alt">
+                <span>Filtrelenen @TurkceBicim.Sayi(s.Toplam) hesabın toplam bakiyesi</span>
+                <span class="num fw-semibold">@TurkceBicim.Para(liste.ToplamBakiye)</span>
+            </div>
+            <partial name="_Sayfalama" model="SayfaBilgisi.Olustur(s)" />
+        }
+    </div>
+</section>

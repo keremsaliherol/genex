@@ -1,0 +1,86 @@
+@model GenelBakisOzeti
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Genel bakış") };
+    var bireysel = Model.AktifMusteri - Model.KurumsalMusteri;
+    var vadesiz = Model.AcikHesap - Model.YatirimHesabi;
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>Genel bakış</h1>
+        <div class="alt"><span>@TurkceBicim.UzunGun(Model.Bugun)</span></div>
+    </div>
+    <div class="sayfa-eylem">
+        <a class="btn btn-outline-secondary" asp-controller="Hesap" asp-action="Yeni"><ikon ad="plus" class="ic-16" />Hesap aç</a>
+        <a class="btn btn-primary" asp-controller="Musteri" asp-action="Yeni"><ikon ad="plus" class="ic-16" />Yeni müşteri</a>
+    </div>
+</div>
+
+@if (Model.AktifMusteri == 0)
+{
+    <div class="panel">
+        <partial name="_Bos" model='new BosDurum("users", "Henüz müşteri yok",
+            "Müşteri ekledikten sonra hesap açabilir ve işlem yapabilirsiniz. Özet göstergeler ilk işlemle birlikte dolar.",
+            "İlk müşteriyi ekle", Url.Action("Yeni", "Musteri"))' />
+    </div>
+}
+else
+{
+    <section class="panel mb-3" aria-label="Özet göstergeler">
+        <div class="kpi-serit">
+            <div class="kpi">
+                <span class="etiket">Aktif müşteri</span>
+                <span class="deger">@TurkceBicim.Sayi(Model.AktifMusteri)</span>
+                <span class="ek">@TurkceBicim.Sayi(bireysel) bireysel, @TurkceBicim.Sayi(Model.KurumsalMusteri) kurumsal</span>
+            </div>
+            <div class="kpi">
+                <span class="etiket">Açık hesap</span>
+                <span class="deger">@TurkceBicim.Sayi(Model.AcikHesap)</span>
+                <span class="ek">@TurkceBicim.Sayi(vadesiz) vadesiz, @TurkceBicim.Sayi(Model.YatirimHesabi) yatırım</span>
+            </div>
+            <div class="kpi">
+                <span class="etiket">Toplam bakiye</span>
+                <span class="deger">@TurkceBicim.ParaKisa(Model.ToplamBakiye)</span>
+                <span class="ek">@TurkceBicim.Para(Model.ToplamBakiye)</span>
+            </div>
+            <div class="kpi">
+                <span class="etiket">Bugünkü işlemler</span>
+                <span class="deger">@TurkceBicim.Sayi(Model.BugunIslem)</span>
+                <span class="ek">Hacim @TurkceBicim.ParaKisa(Model.BugunHacim)</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="son-baslik">
+        <div class="panel-bas">
+            <h2 id="son-baslik">Son işlemler</h2>
+            <span class="aciklama">Transferler iki kayıt olarak görünür: giden ve gelen.</span>
+        </div>
+        <div class="tablo-kap">
+            <table class="table table-hover tablo">
+                <thead>
+                    <tr>
+                        <th scope="col">Zaman</th>
+                        <th scope="col">Hesap no</th>
+                        <th scope="col">Müşteri</th>
+                        <th scope="col">İşlem</th>
+                        <th scope="col" class="num">Tutar</th>
+                        <th scope="col">Açıklama</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var i in Model.SonIslemler)
+                    {
+                        <tr>
+                            <td class="num sessiz">@(i.Tarih >= Model.Bugun ? TurkceBicim.Saat(i.Tarih) : TurkceBicim.TarihSaat(i.Tarih))</td>
+                            <td><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@i.HesapId">@i.HesapNo</a></td>
+                            <td class="text-truncate" style="max-width:200px">@i.MusteriAd</td>
+                            <td><islem-tipi deger="@i.Tip" /></td>
+                            <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
+                            <td class="sessiz text-truncate" style="max-width:240px">@i.Aciklama</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

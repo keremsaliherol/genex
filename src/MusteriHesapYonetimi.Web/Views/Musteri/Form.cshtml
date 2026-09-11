@@ -1,0 +1,89 @@
+@model MusteriKaydi
+@{
+    var id = ViewData["MusteriId"] as int?;
+    var duzenleme = id is not null;
+    var asilAd = ViewData["AsilAd"] as string ?? string.Empty;
+    var noKilidi = ViewData["NoKilitli"] as string;
+    ViewData["Kirinti"] = duzenleme
+        ? new List<Kirinti> { new("Müşteriler", "/Musteri"), new(asilAd, Url.Action("Detay", new { id })), new("Düzenle") }
+        : new List<Kirinti> { new("Müşteriler", "/Musteri"), new("Yeni müşteri") };
+    var geri = duzenleme ? Url.Action("Detay", new { id }) : Url.Action("Index");
+    var kurumsal = Model.Tip == MusteriTipi.Kurumsal;
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>@(duzenleme ? "Müşteriyi düzenle" : "Yeni müşteri")</h1>
+        <div class="alt">
+            @if (duzenleme)
+            {
+                <span>@asilAd, kayıt @TurkceBicim.Tarih((DateTime)ViewData["KayitTarihi"]!)</span>
+            }
+            else
+            {
+                <span>Zorunlu alanlar yıldızla işaretli.</span>
+            }
+        </div>
+    </div>
+</div>
+
+<form method="post" class="panel form-dar" id="mf" novalidate data-kirli-uyari>
+    <partial name="_HataOzeti" />
+
+    <div class="alan-grubu">
+        <h2>Kimlik</h2>
+        <div class="alan">
+            <span class="form-label" id="tip-etiket">Müşteri tipi</span>
+            <div class="segment segment-buyuk" role="radiogroup" aria-labelledby="tip-etiket">
+                <input type="radio" asp-for="Tip" value="Bireysel" id="tip-b" /><label for="tip-b"><ikon ad="user" class="ic-16" />Bireysel</label>
+                <input type="radio" asp-for="Tip" value="Kurumsal" id="tip-k" /><label for="tip-k"><ikon ad="buildings" class="ic-16" />Kurumsal</label>
+            </div>
+        </div>
+        <div class="alan">
+            <label class="form-label" asp-for="AdSoyad"><span data-ad-etiket>@(kurumsal ? "Ünvan" : "Ad soyad")</span><span class="zorunlu" aria-hidden="true">*</span></label>
+            <input asp-for="AdSoyad" class="form-control" maxlength="150" autocomplete="name" aria-describedby="AdSoyad-yardim AdSoyad-hata" />
+            <div id="AdSoyad-yardim" class="form-text">AD_SOYAD, en fazla 150 karakter.</div>
+            <span asp-validation-for="AdSoyad" id="AdSoyad-hata" class="invalid-feedback"></span>
+        </div>
+        <div class="alan">
+            <label class="form-label" asp-for="MusteriNo">Müşteri no<span class="zorunlu" aria-hidden="true">*</span></label>
+            <div class="d-flex gap-2">
+                <input asp-for="MusteriNo" class="form-control mono" inputmode="numeric" maxlength="8" style="max-width:180px"
+                       readonly="@(noKilidi is not null)" aria-describedby="MusteriNo-yardim MusteriNo-hata" />
+                @if (noKilidi is null)
+                {
+                    <button type="button" class="btn btn-outline-secondary" data-no-uret>Otomatik oluştur</button>
+                }
+            </div>
+            <div id="MusteriNo-yardim" class="form-text">@(noKilidi ?? "8 haneli, benzersiz. Hesap numarasının ortasında kullanılır.")</div>
+            <span asp-validation-for="MusteriNo" id="MusteriNo-hata" class="invalid-feedback"></span>
+        </div>
+    </div>
+
+    <div class="alan-grubu">
+        <h2>İletişim</h2>
+        <div class="alan-satir">
+            <div class="alan">
+                <label class="form-label" asp-for="Eposta">E-posta</label>
+                <input asp-for="Eposta" type="email" class="form-control" maxlength="150" autocomplete="email" aria-describedby="Eposta-yardim Eposta-hata" />
+                <div id="Eposta-yardim" class="form-text">İsteğe bağlı.</div>
+                <span asp-validation-for="Eposta" id="Eposta-hata" class="invalid-feedback"></span>
+            </div>
+            <div class="alan">
+                <label class="form-label" asp-for="Telefon">Telefon</label>
+                <input asp-for="Telefon" type="tel" class="form-control mono" maxlength="20" autocomplete="tel" placeholder="+90 5xx xxx xx xx" aria-describedby="Telefon-yardim Telefon-hata" />
+                <div id="Telefon-yardim" class="form-text">İsteğe bağlı, +90 ile biçimlenir.</div>
+                <span asp-validation-for="Telefon" id="Telefon-hata" class="invalid-feedback"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-eylem-cubugu">
+        <span class="durum-metni" data-durum-metni>@(duzenleme ? "Değişiklik yok" : "KAYIT_TARIHI kayıtta SYSDATE ile atanır.")</span>
+        <a class="btn btn-ghost" href="@geri">Vazgeç</a>
+        <button type="submit" class="btn btn-primary">@(duzenleme ? "Değişiklikleri kaydet" : "Müşteriyi kaydet")</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

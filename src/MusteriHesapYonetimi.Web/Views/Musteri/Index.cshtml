@@ -1,0 +1,130 @@
+@model MusteriListeSayfasi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Müşteriler") };
+    var f = Model.Filtre;
+    var s = Model.Sonuc;
+    var donus = SorguDizesi.Donus(Context.Request);
+    var seciliTip = f.Tip?.ToString().ToLowerInvariant() ?? "";
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>Müşteriler</h1>
+        <div class="alt"><span data-canli-sayac>@TurkceBicim.Sayi(s.Toplam) müşteri</span></div>
+    </div>
+    <div class="sayfa-eylem">
+        <a class="btn btn-primary" asp-action="Yeni"><ikon ad="plus" class="ic-16" />Yeni müşteri</a>
+    </div>
+</div>
+
+<section class="panel">
+    <form method="get" asp-action="Index" class="filtre-cubugu" role="search" data-canli-form>
+        @if (f.Sirala != MusteriSiralama.Ad) { <input type="hidden" name="sirala" value="@f.Sirala.ToString().ToLowerInvariant()" /> }
+        @if (f.Yon != SiralamaYonu.Artan) { <input type="hidden" name="yon" value="azalan" /> }
+        @if (f.Boyut != Sayfalama.VarsayilanBoyut) { <input type="hidden" name="boyut" value="@f.Boyut" /> }
+        <div class="arama">
+            <ikon ad="magnifying-glass" class="ic-16" />
+            <label class="visually-hidden" for="m-ara">Müşteri ara</label>
+            <input id="m-ara" name="q" class="form-control" type="search" placeholder="Ad, müşteri no, e-posta veya telefon" value="@f.Q" autocomplete="off" data-canli-arama />
+        </div>
+        <div class="segment" role="radiogroup" aria-label="Müşteri tipi">
+            @foreach (var (deger, ad, i) in new[] { ("", "Tümü", 0), ("bireysel", "Bireysel", 1), ("kurumsal", "Kurumsal", 2) })
+            {
+                <input type="radio" name="tip" id="m-tip-@i" value="@deger" checked="@(seciliTip == deger)" /><label for="m-tip-@i">@ad</label>
+            }
+        </div>
+        <label class="visually-hidden" for="m-durum">Durum</label>
+        <select id="m-durum" name="durum" class="form-select">
+            <option value="" selected="@(f.Durum == DurumFiltresi.Aktif)">Aktif müşteriler</option>
+            <option value="pasif" selected="@(f.Durum == DurumFiltresi.Pasif)">Pasif müşteriler</option>
+            <option value="tumu" selected="@(f.Durum == DurumFiltresi.Tumu)">Tüm durumlar</option>
+        </select>
+        <button type="submit" class="btn btn-outline-secondary btn-sm" data-js-gizle>Uygula</button>
+        <a class="btn btn-ghost btn-sm ms-auto" asp-action="Index">Filtreleri temizle</a>
+    </form>
+
+    <div data-canli-kap>
+        @if (s.Toplam == 0)
+        {
+            if (f.FiltreVar)
+            {
+                <partial name="_Bos" model='new BosDurum("magnifying-glass",
+                    string.IsNullOrWhiteSpace(f.Q) ? "Bu filtrelerle müşteri yok" : $"\"{f.Q}\" için sonuç yok",
+                    "Yazımı kontrol edin ya da filtreleri temizleyin. Müşteri no 8 hanelidir.",
+                    "Filtreleri temizle", Url.Action("Index"), EylemBirincil: false)' />
+            }
+            else
+            {
+                <partial name="_Bos" model='new BosDurum("users", "Henüz müşteri yok",
+                    "İlk müşteriyi ekleyerek başlayın. Hesap açma ve işlemler müşteri kaydından sonra kullanılabilir.",
+                    "Yeni müşteri", Url.Action("Yeni"))' />
+            }
+        }
+        else
+        {
+            <div class="tablo-kap">
+                <table class="table table-hover tablo">
+                    <thead>
+                        <tr>
+                            <th sirala="No" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon">Müşteri no</th>
+                            <th sirala="Ad" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon">Ad soyad / Ünvan</th>
+                            <th scope="col">Tip</th>
+                            <th scope="col" class="genis">Telefon</th>
+                            <th sirala="Hesap" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon" sirala-ilk="Azalan" class="num">Hesap</th>
+                            <th sirala="Bakiye" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon" sirala-ilk="Azalan" class="num">Toplam bakiye</th>
+                            <th sirala="Kayit" sirala-aktif="@f.Sirala" sirala-yon="@f.Yon" sirala-ilk="Azalan">Kayıt tarihi</th>
+                            <th scope="col">Durum</th>
+                            <th scope="col"><span class="visually-hidden">Eylemler</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in s.Ogeler)
+                        {
+                            var detay = Url.Action("Detay", new { id = m.Id });
+                            <tr class="tiklanir" data-href="@detay">
+                                <td class="num">@m.MusteriNo</td>
+                                <td><kimlik ad="@m.AdSoyad" tip="@m.Tip" href="@detay" alt="@m.Eposta" /></td>
+                                <td><musteri-tipi deger="@m.Tip" /></td>
+                                <td class="num sessiz genis">@m.Telefon</td>
+                                <td class="num">@m.HesapSayisi</td>
+                                <td class="num"><tutar deger="@m.ToplamBakiye" /></td>
+                                <td class="num sessiz">@TurkceBicim.Tarih(m.KayitTarihi)</td>
+                                <td><durum aktif="@m.Aktif" /></td>
+                                <td class="text-end satir-menu">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn btn-ghost btn-sm btn-icon" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-label="@m.AdSoyad için eylemler"><ikon ad="dots-three-vertical" class="ic-16" /></button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="@detay"><ikon ad="identification-card" />Detay</a></li>
+                                            <li><a class="dropdown-item" asp-action="Duzenle" asp-route-id="@m.Id"><ikon ad="pencil-simple" />Düzenle</a></li>
+                                            @if (m.Aktif)
+                                            {
+                                                <li><a class="dropdown-item" asp-controller="Hesap" asp-action="Yeni" asp-route-musteriId="@m.Id"><ikon ad="plus" />Hesap aç</a></li>
+                                                <li><hr class="dropdown-divider" /></li>
+                                                <li>
+                                                    <form method="post" asp-action="PasifeAl" asp-route-id="@m.Id" data-onay="Müşteri pasife alınsın mı?"
+                                                          data-onay-metin="@m.AdSoyad pasife alınacak. Kayıt silinmez; hesaplar ve işlem geçmişi korunur, yeni işlem yapılamaz." data-onay-dugme="Pasife al">
+                                                        <input type="hidden" name="donus" value="@donus" />
+                                                        <button type="submit" class="dropdown-item"><ikon ad="prohibit" />Pasife al</button>
+                                                    </form>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li>
+                                                    <form method="post" asp-action="Aktiflestir" asp-route-id="@m.Id">
+                                                        <input type="hidden" name="donus" value="@donus" />
+                                                        <button type="submit" class="dropdown-item"><ikon ad="arrow-counter-clockwise" />Aktifleştir</button>
+                                                    </form>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <partial name="_Sayfalama" model="SayfaBilgisi.Olustur(s)" />
+        }
+    </div>
+</section>

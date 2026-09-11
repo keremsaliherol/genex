@@ -1,0 +1,34 @@
+@* Form üstündeki hata özeti (sunucu doğrulaması). Bağlantılar ilgili alana götürür; alansız hata düz metindir. *@
+@{
+    var hatali = ViewData.ModelState.Where(k => k.Value is { Errors.Count: > 0 }).ToList();
+    var alanSayisi = hatali.Count(k => k.Key.Length > 0);
+}
+@if (hatali.Count > 0)
+{
+    <div class="p-3 pb-0">
+        <div class="uyari uyari--hata hata-ozeti" role="alert">
+            <ikon ad="warning-circle" />
+            <div>
+                <strong>@(alanSayisi > 0 ? $"{alanSayisi} alan düzeltilmeli." : "Kayıt tamamlanamadı.")</strong>
+                <ul>
+                    @foreach (var (anahtar, durum) in hatali)
+                    {
+                        foreach (var hata in durum!.Errors)
+                        {
+                            <li>
+                                @if (anahtar.Length > 0)
+                                {
+                                    <a href="#@anahtar">@hata.ErrorMessage</a>
+                                }
+                                else
+                                {
+                                    @hata.ErrorMessage
+                                }
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}

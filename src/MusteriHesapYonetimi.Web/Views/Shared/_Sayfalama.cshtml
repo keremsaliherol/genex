@@ -1,0 +1,45 @@
+@model SayfaBilgisi
+@{
+    var istek = Context.Request;
+    string Adres(int sayfa) => SorguDizesi.Degistir(istek, ("sayfa", sayfa == 1 ? null : sayfa));
+    var korunan = istek.Query.Where(k => !k.Key.Equals("boyut", StringComparison.OrdinalIgnoreCase)
+                                      && !k.Key.Equals("sayfa", StringComparison.OrdinalIgnoreCase));
+}
+<div class="sayfalama">
+    <span class="num">@TurkceBicim.Sayi(Model.Bas)-@TurkceBicim.Sayi(Model.Bit) / @TurkceBicim.Sayi(Model.Toplam)</span>
+    <div class="d-flex align-items-center gap-2">
+        <form method="get" action="@istek.Path" class="m-0 d-flex gap-2" data-canli-form>
+            @foreach (var k in korunan)
+            {
+                <input type="hidden" name="@k.Key" value="@k.Value" />
+            }
+            <label class="visually-hidden" for="sayfa-boyut">Sayfa boyutu</label>
+            <select id="sayfa-boyut" name="boyut" class="form-select">
+                @foreach (var n in Sayfalama.Boyutlar)
+                {
+                    <option value="@n" selected="@(n == Model.Boyut)">@n satır</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-outline-secondary btn-sm" data-js-gizle>Uygula</button>
+        </form>
+        <nav class="d-flex align-items-center gap-1" aria-label="Sayfalar">
+            @if (Model.Sayfa > 1)
+            {
+                <a class="btn btn-outline-secondary btn-sm btn-icon" href="@Adres(Model.Sayfa - 1)" aria-label="Önceki sayfa" data-canli><ikon ad="caret-left" class="ic-16" /></a>
+            }
+            else
+            {
+                <span class="btn btn-outline-secondary btn-sm btn-icon disabled" aria-hidden="true"><ikon ad="caret-left" class="ic-16" /></span>
+            }
+            <span class="px-2 num">@Model.Sayfa / @Model.SonSayfa</span>
+            @if (Model.Sayfa < Model.SonSayfa)
+            {
+                <a class="btn btn-outline-secondary btn-sm btn-icon" href="@Adres(Model.Sayfa + 1)" aria-label="Sonraki sayfa" data-canli><ikon ad="caret-right" class="ic-16" /></a>
+            }
+            else
+            {
+                <span class="btn btn-outline-secondary btn-sm btn-icon disabled" aria-hidden="true"><ikon ad="caret-right" class="ic-16" /></span>
+            }
+        </nav>
+    </div>
+</div>

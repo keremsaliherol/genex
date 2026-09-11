@@ -1,0 +1,251 @@
+/* Hesap Masası tema katmanı
+   Katmanlar: primitive (ham değer) → semantic (görev adı) → component (Bootstrap 5.3 eşlemesi).
+   Açık tema bare :root'ta; koyu tema hem prefers-color-scheme hem data-theme ile. */
+
+/* 1) Primitive */
+:root {
+  --p-ink-950: #141A26;
+  --p-ink-700: #525C70;
+  --p-ink-500: #6B7489;
+  --p-ink-300: #CDD3DD;
+  --p-ink-200: #E2E6ED;
+  --p-ink-100: #F3F5F8;
+  --p-ink-50: #F7F8FA;
+  --p-ink-25: #FCFCFD;
+
+  --p-night-950: #0E121A;
+  --p-night-900: #151B25;
+  --p-night-850: #1B2230;
+  --p-night-700: #273142;
+  --p-night-600: #334058;
+  --p-night-400: #8791A5;
+  --p-night-300: #A6B0C2;
+  --p-night-100: #E6EAF1;
+
+  --p-cobalt-900: #1C2748;
+  --p-cobalt-700: #1C38A3;
+  --p-cobalt-600: #2446C8;
+  --p-cobalt-400: #5B78E6;
+  --p-cobalt-300: #7D96F2;
+  --p-cobalt-200: #9DB0F5;
+  --p-cobalt-50: #E9EEFC;
+
+  --p-green-950: #12291F;
+  --p-green-700: #17744A;
+  --p-green-300: #55C592;
+  --p-green-50: #E7F4ED;
+
+  --p-red-950: #3A1A18;
+  --p-red-700: #B42318;
+  --p-red-400: #E66767;
+  --p-red-300: #F28B82;
+  --p-red-50: #FCEBE9;
+
+  --p-amber-950: #33270F;
+  --p-amber-700: #935A00;
+  --p-amber-300: #E8B45A;
+  --p-amber-50: #FDF3DB;
+
+  --p-orange-600: #D95926;
+  --p-orange-500: #EB6834;
+}
+
+/* 2) Semantic: açık tema (varsayılan, damgasız belge) */
+:root {
+  color-scheme: light;
+  --canvas: var(--p-ink-100);
+  --surface: var(--p-ink-25);
+  --surface-2: var(--p-ink-50);
+  --line: var(--p-ink-200);
+  --line-strong: var(--p-ink-300);
+  --ink: var(--p-ink-950);
+  --ink-2: var(--p-ink-700);
+  --ink-3: var(--p-ink-500);
+
+  --accent: var(--p-cobalt-600);
+  --accent-rgb: 36, 70, 200;
+  --accent-hover: var(--p-cobalt-700);
+  --accent-soft: var(--p-cobalt-50);
+  --on-accent: #FDFDFE;
+
+  --credit: var(--p-green-700);
+  --credit-soft: var(--p-green-50);
+  --debit: var(--p-red-700);
+  --debit-soft: var(--p-red-50);
+  --warn: var(--p-amber-700);
+  --warn-soft: var(--p-amber-50);
+
+  --focus-ring: rgba(36, 70, 200, 0.28);
+  --shadow-pop: 0 10px 28px rgba(20, 26, 38, 0.10), 0 1px 2px rgba(20, 26, 38, 0.06);
+  --shadow-drawer: 0 -10px 28px rgba(20, 26, 38, 0.08);
+  --scrim: rgba(14, 18, 26, 0.48);
+  --skeleton: #E9ECF1;
+  --skeleton-hi: #F4F6F9;
+
+  /* Grafik (dataviz doğrulayıcısından geçti, zemin #FCFCFD) */
+  --viz-1: var(--p-cobalt-600);
+  --viz-1-wash: rgba(36, 70, 200, 0.10);
+  --viz-neg: var(--p-red-700);
+  --viz-2: var(--p-orange-500);
+  --viz-grid: var(--p-ink-200);
+  --viz-axis: var(--p-ink-300);
+  --viz-text: var(--p-ink-700);
+
+  /* SQL renklendirme */
+  --code-kw: var(--p-cobalt-600);
+  --code-str: var(--p-green-700);
+  --code-bind: var(--p-amber-700);
+  --code-cmt: var(--p-ink-500);
+
+  /* Tipografi */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-30: 1.875rem;
+
+  /* Şekil kilidi: kontrol 6, panel 10, rozet 4 */
+  --r-control: 6px;
+  --r-panel: 10px;
+  --r-badge: 4px;
+
+  /* Yerleşim */
+  --sidebar-w: 232px;
+  --topbar-h: 56px;
+  --izbar-h: 36px;
+  --iz-govde-h: 340px;
+  --gutter: 24px;
+
+  /* Hareket */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-1: 160ms;
+  --dur-2: 220ms;
+}
+
+/* Koyu tema: işletim sistemi tercihi (açık damgası yoksa) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --canvas: var(--p-night-950);
+    --surface: var(--p-night-900);
+    --surface-2: var(--p-night-850);
+    --line: var(--p-night-700);
+    --line-strong: var(--p-night-600);
+    --ink: var(--p-night-100);
+    --ink-2: var(--p-night-300);
+    --ink-3: var(--p-night-400);
+    --accent: var(--p-cobalt-300);
+    --accent-rgb: 125, 150, 242;
+    --accent-hover: var(--p-cobalt-200);
+    --accent-soft: var(--p-cobalt-900);
+    --on-accent: var(--p-night-950);
+    --credit: var(--p-green-300);
+    --credit-soft: var(--p-green-950);
+    --debit: var(--p-red-300);
+    --debit-soft: var(--p-red-950);
+    --warn: var(--p-amber-300);
+    --warn-soft: var(--p-amber-950);
+    --focus-ring: rgba(125, 150, 242, 0.35);
+    --shadow-pop: 0 10px 28px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-drawer: 0 -10px 28px rgba(0, 0, 0, 0.35);
+    --scrim: rgba(5, 8, 12, 0.6);
+    --skeleton: #1F2735;
+    --skeleton-hi: #263042;
+    --viz-1: var(--p-cobalt-400);
+    --viz-1-wash: rgba(91, 120, 230, 0.14);
+    --viz-neg: var(--p-red-400);
+    --viz-2: var(--p-orange-600);
+    --viz-grid: var(--p-night-700);
+    --viz-axis: var(--p-night-600);
+    --viz-text: var(--p-night-300);
+    --code-kw: var(--p-cobalt-200);
+    --code-str: var(--p-green-300);
+    --code-bind: var(--p-amber-300);
+    --code-cmt: var(--p-night-400);
+  }
+}
+
+/* Koyu tema: açık seçim (görünüm menüsü veya barındırıcı damgası) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: var(--p-night-950);
+  --surface: var(--p-night-900);
+  --surface-2: var(--p-night-850);
+  --line: var(--p-night-700);
+  --line-strong: var(--p-night-600);
+  --ink: var(--p-night-100);
+  --ink-2: var(--p-night-300);
+  --ink-3: var(--p-night-400);
+  --accent: var(--p-cobalt-300);
+  --accent-rgb: 125, 150, 242;
+  --accent-hover: var(--p-cobalt-200);
+  --accent-soft: var(--p-cobalt-900);
+  --on-accent: var(--p-night-950);
+  --credit: var(--p-green-300);
+  --credit-soft: var(--p-green-950);
+  --debit: var(--p-red-300);
+  --debit-soft: var(--p-red-950);
+  --warn: var(--p-amber-300);
+  --warn-soft: var(--p-amber-950);
+  --focus-ring: rgba(125, 150, 242, 0.35);
+  --shadow-pop: 0 10px 28px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-drawer: 0 -10px 28px rgba(0, 0, 0, 0.35);
+  --scrim: rgba(5, 8, 12, 0.6);
+  --skeleton: #1F2735;
+  --skeleton-hi: #263042;
+  --viz-1: var(--p-cobalt-400);
+  --viz-1-wash: rgba(91, 120, 230, 0.14);
+  --viz-neg: var(--p-red-400);
+  --viz-2: var(--p-orange-600);
+  --viz-grid: var(--p-night-700);
+  --viz-axis: var(--p-night-600);
+  --viz-text: var(--p-night-300);
+  --code-kw: var(--p-cobalt-200);
+  --code-str: var(--p-green-300);
+  --code-bind: var(--p-amber-300);
+  --code-cmt: var(--p-night-400);
+}
+
+/* 3) Component: Bootstrap 5.3 değişken eşlemesi.
+   --bs-body-bg yüzey rengidir (input, dropdown, modal onu kullanır); sayfa zemini body kuralında canvas. */
+:root,
+[data-bs-theme="light"],
+[data-bs-theme="dark"] {
+  --bs-body-font-family: var(--font-sans);
+  --bs-body-font-size: var(--fs-14);
+  --bs-body-font-weight: 400;
+  --bs-body-line-height: 1.5;
+  --bs-body-color: var(--ink);
+  --bs-body-bg: var(--surface);
+  --bs-emphasis-color: var(--ink);
+  --bs-secondary-color: var(--ink-2);
+  --bs-secondary-bg: var(--surface-2);
+  --bs-tertiary-color: var(--ink-3);
+  --bs-tertiary-bg: var(--surface-2);
+  --bs-heading-color: var(--ink);
+  --bs-link-color: var(--accent);
+  --bs-link-color-rgb: var(--accent-rgb);
+  --bs-link-hover-color: var(--accent-hover);
+  --bs-link-hover-color-rgb: var(--accent-rgb);
+  --bs-border-color: var(--line);
+  --bs-border-color-translucent: var(--line);
+  --bs-border-radius: var(--r-control);
+  --bs-border-radius-sm: var(--r-badge);
+  --bs-border-radius-lg: var(--r-panel);
+  --bs-border-radius-xl: var(--r-panel);
+  --bs-border-radius-xxl: var(--r-panel);
+  --bs-focus-ring-color: var(--focus-ring);
+  --bs-focus-ring-width: 3px;
+  --bs-primary: var(--accent);
+  --bs-primary-rgb: var(--accent-rgb);
+  --bs-code-color: var(--ink);
+  --bs-highlight-bg: var(--warn-soft);
+  --bs-form-valid-color: var(--credit);
+  --bs-form-valid-border-color: var(--credit);
+  --bs-form-invalid-color: var(--debit);
+  --bs-form-invalid-border-color: var(--debit);
+}

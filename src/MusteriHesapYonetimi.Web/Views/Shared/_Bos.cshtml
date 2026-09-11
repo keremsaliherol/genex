@@ -1,0 +1,10 @@
+@model BosDurum
+<div class="bos-durum">
+    <div class="ikon-kap"><ikon ad="@Model.Ikon" /></div>
+    <h3>@Model.Baslik</h3>
+    <p>@Model.Metin</p>
+    @if (Model.EylemAdresi is not null)
+    {
+        <a class="btn @(Model.EylemBirincil ? "btn-primary" : "btn-outline-secondary")" href="@Model.EylemAdresi">@Model.EylemMetni</a>
+    }
+</div>

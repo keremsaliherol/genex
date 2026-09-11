@@ -1,0 +1,66 @@
+/* Razor uygulamasına özgü kurallar (prototipte karşılığı olmayanlar).
+   Tema ve bileşenler theme.css'te; o dosya prototipten üretilir: node tools/on-yuz-varliklari.mjs */
+
+/* Oracle izi çubuğu Faz 3'te gelir; o zamana kadar alt kenarda boşluk ayrılmaz */
+body.iz-yok { --izbar-h: 0px; }
+
+/* Sonraki fazlarda açılacak modüller: menüde görünür, tıklanmaz */
+.hm-nav .yakinda {
+  display: flex; align-items: center; gap: 10px;
+  height: 36px; padding: 0 10px; border-radius: var(--r-control);
+  color: var(--ink-3); font-weight: 500; cursor: not-allowed; user-select: none;
+}
+.hm-nav .yakinda small {
+  margin-left: auto; font: 500 11px/1.5 var(--font-mono);
+  padding: 0 5px; border: 1px solid var(--line); border-radius: var(--r-badge);
+}
+@media (max-width: 1279.98px) {
+  .hm-nav .yakinda { justify-content: center; padding: 0; }
+  .hm-nav .yakinda > span, .hm-nav .yakinda small { display: none; }
+}
+@media (max-width: 767.98px) {
+  .hm-nav .yakinda { justify-content: flex-start; padding: 0 10px; }
+  .hm-nav .yakinda > span, .hm-nav .yakinda small { display: revert; }
+}
+
+/* 1440 px altında ikincil sütunlar gizlenir; bilgi başka yerde de görünür
+   (telefon: müşteri detayı, karşı hesap: açıklama). Tablo kendi kabında yatay kaymasın. */
+@media (max-width: 1439.98px) {
+  .tablo .genis { display: none; }
+}
+
+/* Sıralama başlığı sunucu tarafında bir bağlantıdır */
+a.sirala { text-decoration: none; color: inherit; }
+
+/* ASP.NET doğrulama sınıfları: sunucu (input-validation-error) ve jquery-validation-unobtrusive aynı görünür */
+.form-control.input-validation-error, .form-select.input-validation-error { border-color: var(--debit); }
+.form-control.input-validation-error:focus { box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.2); }
+.field-validation-valid { display: none; }
+.alan .invalid-feedback.field-validation-error { display: block; }
+.hata-ozeti a { text-decoration: underline; }
+
+/* Bildirimler */
+.toast-body .ic.ic-hata { color: var(--debit); }
+.toast-body form { margin: 0; }
+
+/* Tema menüsündeki seçili işaret */
+.dropdown-item[data-tema] .tik { visibility: hidden; }
+.dropdown-item[data-tema][aria-checked="true"] .tik { visibility: visible; }
+.dropdown-menu form { margin: 0; }
+
+/* Canlı filtre: yeni sonuç gelene kadar tablo soluklaşır */
+[data-canli-kap] { transition: opacity var(--dur-1) var(--ease-out); }
+[data-canli-kap][aria-busy="true"] { opacity: 0.55; }
+
+/* JS açıkken filtreler kendiliğinden uygulanır; "Uygula" düğmesi yalnız JS kapalıyken görünür */
+.js [data-js-gizle] { display: none; }
+
+/* Müşteri filtresi çipi (hesap listesi) */
+.filtre-cip { font-size: var(--fs-13); padding: 3px 4px 3px 8px; gap: 6px; }
+.filtre-cip a { color: inherit; display: inline-flex; border-radius: var(--r-badge); }
+.filtre-cip a:hover { background: var(--surface); }
+
+/* Sunucuda çizilen basamaklı bakiye çizgisi (_BakiyeCizgisi) */
+.bakiye-cizgisi { display: block; width: 100%; height: 72px; overflow: visible; }
+.bakiye-cizgisi .alan { fill: var(--viz-1-wash); }
+.bakiye-cizgisi .cizgi { fill: none; stroke: var(--viz-1); stroke-width: 1.5; stroke-linejoin: round; }
