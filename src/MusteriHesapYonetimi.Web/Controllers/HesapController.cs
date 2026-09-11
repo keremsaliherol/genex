@@ -1,5 +1,8 @@
+using System.Globalization;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using MusteriHesapYonetimi.Application.Hesaplar;
+using MusteriHesapYonetimi.Application.Islemler;
 using MusteriHesapYonetimi.Application.Musteriler;
 using MusteriHesapYonetimi.Application.Ortak;
 using MusteriHesapYonetimi.Domain;
@@ -8,9 +11,41 @@ using MusteriHesapYonetimi.Web.Models;
 
 namespace MusteriHesapYonetimi.Web.Controllers;
 
-/// <summary>Hesap ekranları (S5-S7). Ekstre ve işlemler Faz 3'te.</summary>
-public sealed class HesapController(IHesapServisi servis, IMusteriServisi musteriler) : Controller
+/// <summary>Hesap ekranları (S5-S7) ve ekstre (S9).</summary>
+public sealed class HesapController(IHesapServisi servis, IMusteriServisi musteriler, IEkstreSorgusu ekstreler) : Controller
 {
+    /// <summary>/Hesap/Ekstre: hesap seçimi. /Hesap/Ekstre/{id}?on=gecenay&amp;tip=Yatirma: ekstre.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Ekstre(int? id, [FromQuery] EkstreFiltre filtre, CancellationToken ct)
+    {
+        if (id is null) return View("EkstreSec");
+        return await ekstreler.OkuAsync(id.Value, filtre, ct) is { } ekstre ? View(ekstre) : NotFound();
+    }
+
+    /// <summary>Ekranda görünen satırların CSV'si: noktalı virgül, UTF-8 BOM, tr-TR ondalık virgül (Excel doğrudan açar).</summary>
+    [HttpGet]
+    public async Task<IActionResult> EkstreCsv(int id, [FromQuery] EkstreFiltre filtre, CancellationToken ct)
+    {
+        if (await ekstreler.OkuAsync(id, filtre, ct) is not { } ekstre) return NotFound();
+
+        var metin = new StringBuilder();
+        metin.AppendLine(Csv.Satir(["ISLEM_ID", "ISLEM_TARIHI", "ISLEM_TIPI", "ACIKLAMA", "KARSI_HESAP_NO", "TUTAR", "BAKIYE"]));
+        foreach (var s in ekstre.Satirlar)
+        {
+            metin.AppendLine(Csv.Satir([
+                s.Id.ToString(CultureInfo.InvariantCulture),
+                TurkceBicim.TarihSaatSaniye(s.Tarih),
+                VeritabaniKodu.Yaz(s.Tip),
+                Csv.Metin(s.Aciklama),
+                s.KarsiHesapNo,
+                s.IsaretliTutar.ToString("0.00", TurkceBicim.Kultur),
+                (s.BakiyeSonra ?? 0).ToString("0.00", TurkceBicim.Kultur)
+            ]));
+        }
+        var icerik = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(metin.ToString())).ToArray();
+        return File(icerik, "text/csv; charset=utf-8", $"ekstre-{ekstre.HesapNo}-{ekstre.Bas:yyyyMMdd}-{ekstre.Bit:yyyyMMdd}.csv");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] HesapFiltre filtre, CancellationToken ct)
         => View(new HesapListeSayfasi(filtre, await servis.ListeleAsync(filtre, ct)));

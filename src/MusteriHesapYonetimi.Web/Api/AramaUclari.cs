@@ -1,4 +1,5 @@
 using MusteriHesapYonetimi.Application.Hesaplar;
+using MusteriHesapYonetimi.Application.Islemler;
 using MusteriHesapYonetimi.Application.Musteriler;
 using MusteriHesapYonetimi.Web.Altyapi;
 
@@ -41,6 +42,22 @@ public static class AramaUclari
 
         api.MapGet("/hesap/no-onizle", async (int musteriId, IHesapServisi hesaplar, CancellationToken ct) =>
             Results.Ok(new { no = await hesaplar.HesapNoOnizleAsync(musteriId, ct) }));
+
+        // İşlem formundaki kaynak ve hedef hesap seçicileri
+        api.MapGet("/hesap/ara", async (string? q, int? haric, IHesapServisi hesaplar, CancellationToken ct) =>
+            Results.Ok((await hesaplar.AraAsync(q ?? string.Empty, 8, ct)).Where(x => x.Id != haric).Select(x => new
+            {
+                x.Id,
+                no = x.HesapNo,
+                ad = x.MusteriAd,
+                tipAd = Etiketler.HesapTipiEtiketi(x.Tip).Ad,
+                x.Bakiye,
+                x.Aktif,
+                x.MusteriAktif
+            })));
+
+        api.MapGet("/hesap/{id:int}/islem", async (int id, IIslemServisi islemler, CancellationToken ct) =>
+            await islemler.HesapAsync(id, ct) is { } hesap ? Results.Ok(IslemApi.Hesap(hesap)) : Results.NotFound());
 
         return app;
     }

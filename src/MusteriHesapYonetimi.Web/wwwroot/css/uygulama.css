@@ -1,8 +1,16 @@
 /* Razor uygulamasına özgü kurallar (prototipte karşılığı olmayanlar).
    Tema ve bileşenler theme.css'te; o dosya prototipten üretilir: node tools/on-yuz-varliklari.mjs */
 
-/* Oracle izi çubuğu Faz 3'te gelir; o zamana kadar alt kenarda boşluk ayrılmaz */
+/* Oracle izi kapalıyken (üretim) alt kenarda boşluk ayrılmaz */
 body.iz-yok { --izbar-h: 0px; }
+
+/* Oracle izi: komutlar isteğe göre gruplanır; hata notu kırmızı */
+.iz-istek {
+  display: flex; justify-content: space-between; gap: 12px; margin: 4px 2px -4px;
+  font-size: var(--fs-12); font-weight: 500; color: var(--ink-3);
+}
+.iz-istek .mono { color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iz-not.iz-hata { color: var(--debit); font-family: var(--font-mono); font-size: 12px; }
 
 /* Sonraki fazlarda açılacak modüller: menüde görünür, tıklanmaz */
 .hm-nav .yakinda {

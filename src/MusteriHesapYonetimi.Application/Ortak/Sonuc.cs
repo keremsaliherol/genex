@@ -1,7 +1,10 @@
 namespace MusteriHesapYonetimi.Application.Ortak;
 
-/// <summary>Alanı belli bir hata (form alanının altında) ya da alansız hata (formun üstünde veya bildirimde).</summary>
-public sealed record AlanHatasi(string? Alan, string Mesaj);
+/// <summary>
+/// Alanı belli bir hata (form alanının altında) ya da alansız hata (formun üstünde veya bildirimde).
+/// Kod, hatayı veritabanı ürettiyse doludur (ör. ORA-20001); arayüz "veritabanında reddedildi" olarak gösterir.
+/// </summary>
+public sealed record AlanHatasi(string? Alan, string Mesaj, string? Kod = null);
 
 /// <summary>
 /// Servis sonucu. İş kuralı ihlalleri istisna değil sonuç olarak döner; Web katmanı alanlı hataları

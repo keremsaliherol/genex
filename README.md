@@ -26,8 +26,8 @@ PL/SQL'de tutulur. Bu proje o düzeni küçük ölçekte kurar:
 |---|---|
 | Faz 1: şema, PL/SQL paketleri, tohum veri, .NET çözümü | Tamam |
 | Faz 2: müşteri ve hesap ekranları (liste, detay, ekle/düzenle, hesap aç, pasife al) | Tamam |
-| Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Sırada |
-| Faz 4: raporlar (PKG_RAPOR, grafikler) | Bekliyor |
+| Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Tamam (Oracle izi paneli son doğrulamada) |
+| Faz 4: raporlar (PKG_RAPOR, grafikler) | Sırada |
 | Faz 5: giriş (Identity), sunum | Bekliyor |
 
 Ayrıntılı durum ve kararlar: [docs/devir-notlari.md](docs/devir-notlari.md).
@@ -35,6 +35,11 @@ Ayrıntılı durum ve kararlar: [docs/devir-notlari.md](docs/devir-notlari.md).
 Faz 2'den öne çıkanlar: müşteri no ve Türkçe ad araması (`NLS_UPPER` / `NLSSORT` ile `XTURKISH`), sayfayı
 yenilemeden uygulanan GET filtreleri, hesap açılışında müşteri satırı kilidi ve açılış tutarının `PKG_ISLEM.YATIR`
 ile aynı transaction'da işlenmesi, veritabanı kısıtlarıyla desteklenen pasife alma kuralları.
+
+Faz 3'ten öne çıkanlar: para hareketi kuralları yalnız `PKG_ISLEM`'de, uygulama `ORA-200xx` hatalarını ilgili form alanına
+eşler ("Yine de gönder" veritabanının reddini canlı gösterir); transfer tek `OracleTransaction`'da iki kayıt ve ortak
+referans; ekstrede yürüyen bakiye `SUM() OVER` ile; **Oracle izi** paneli her ekranın çalıştırdığı SQL/PL-SQL'i, bind
+değerlerini, süreyi ve trigger'ın bakiyeye etkisini gösterir (EF Core interceptor + Dapper sarmalayıcısı, yalnız geliştirme).
 
 ## Mimari
 

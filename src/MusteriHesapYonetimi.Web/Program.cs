@@ -25,7 +25,9 @@ builder.Services.AddControllersWithViews(o =>
     o.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
     o.ModelBindingMessageProvider.Turkcelestir();
 });
-builder.Services.AddVeriKatmani(baglantiCumlesi);
+// Oracle izi: her ekranın çalıştırdığı SQL/PL-SQL alt panelde. Varsayılan yalnız Development'ta açık.
+var oracleIzi = builder.Configuration.GetValue("OracleIzi:Acik", builder.Environment.IsDevelopment());
+builder.Services.AddVeriKatmani(baglantiCumlesi, oracleIzi);
 
 var app = builder.Build();
 
@@ -44,6 +46,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = [TurkceBicim.Kultur]
 });
 
+if (oracleIzi) app.UseOracleIzi();
+
 app.UseRouting();
 app.UseAuthorization();
 app.MapStaticAssets();
@@ -53,6 +57,7 @@ app.MapGet("/saglik", async (ISistemDurumuSorgusu sorgu, CancellationToken ct) =
     Results.Ok(await sorgu.OkuAsync(ct)));
 
 app.MapAramaUclari();
+if (oracleIzi) app.MapOracleIzi();
 
 app.MapControllerRoute(
     name: "default",

@@ -1,5 +1,6 @@
 using System.Data;
 using Dapper;
+using MusteriHesapYonetimi.Data.Izleme;
 using Oracle.ManagedDataAccess.Client;
 using Oracle.ManagedDataAccess.Types;
 
@@ -55,6 +56,13 @@ public sealed class OracleParametreleri : SqlMapper.IDynamicParameters
             var deger => (T)Convert.ChangeType(deger, hedefTip)
         };
     }
+
+    /// <summary>Oracle izi için bind değerleri; OUT parametreler çağrıdan sonraki değeriyle.</summary>
+    internal IReadOnlyList<IzParametresi> IzListesi() => _parametreler.Values
+        .Select(p => new IzParametresi(
+            p.Direction == ParameterDirection.Input ? p.ParameterName : $"{p.ParameterName} (OUT)",
+            p.OracleDbType == OracleDbType.RefCursor ? "REF CURSOR" : IzDegeri.Yaz(p.Value)))
+        .ToList();
 
     void SqlMapper.IDynamicParameters.AddParameters(IDbCommand command, SqlMapper.Identity identity)
     {

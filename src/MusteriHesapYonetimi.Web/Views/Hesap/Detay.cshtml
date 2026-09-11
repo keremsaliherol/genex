@@ -4,6 +4,18 @@
     var m = Model.Musteri;
     var sekme = ViewData["Sekme"] as string ?? "hareket";
     var yatirim = h.HesapTipi == HesapTipi.Yatirim;
+    var islemYapilabilir = h.Aktif && m.Aktif;
+    var islemMenu = new List<(IslemTuru Tur, string Ad, string Ikon)>
+    {
+        (IslemTuru.Yatirma, "Para yatır", "arrow-down-left"),
+        (IslemTuru.Cekme, "Para çek", "arrow-up-right"),
+        (IslemTuru.Transfer, "Transfer", "arrows-left-right")
+    };
+    if (yatirim)
+    {
+        islemMenu.Add((IslemTuru.Alim, "Hisse al", "trend-up"));
+        islemMenu.Add((IslemTuru.Satim, "Hisse sat", "trend-down"));
+    }
     ViewData["Kirinti"] = new List<Kirinti> { new("Hesaplar", "/Hesap"), new(h.HesapNo) };
 }
 <div class="sayfa-bas">
@@ -21,10 +33,24 @@
         </div>
     </div>
     <div class="sayfa-eylem">
-        <button type="button" class="btn btn-outline-secondary" data-kopyala="@h.HesapNo"><ikon ad="copy" class="ic-16" />Hesap no kopyala</button>
+        <a class="btn btn-outline-secondary" asp-action="Ekstre" asp-route-id="@h.HesapId"><ikon ad="receipt" class="ic-16" />Ekstre</a>
+        @if (islemYapilabilir)
+        {
+            <div class="btn-group">
+                <a class="btn btn-primary" asp-controller="Islem" asp-action="Yeni" asp-route-hesapId="@h.HesapId"><ikon ad="arrows-left-right" class="ic-16" />İşlem yap</a>
+                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">İşlem tipini seç</span></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    @foreach (var (tur, ad, ikon) in islemMenu)
+                    {
+                        <li><a class="dropdown-item" asp-controller="Islem" asp-action="Yeni" asp-route-hesapId="@h.HesapId" asp-route-tip="@tur"><ikon ad="@ikon" />@ad</a></li>
+                    }
+                </ul>
+            </div>
+        }
         <div class="dropdown">
             <button type="button" class="btn btn-ghost btn-icon" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Diğer eylemler"><ikon ad="dots-three-vertical" /></button>
             <ul class="dropdown-menu dropdown-menu-end">
+                <li><button type="button" class="dropdown-item" data-kopyala="@h.HesapNo"><ikon ad="copy" />Hesap no kopyala</button></li>
                 <li><a class="dropdown-item" asp-action="Index" asp-route-musteriId="@m.MusteriId"><ikon ad="wallet" />Müşterinin hesapları</a></li>
                 <li><hr class="dropdown-divider" /></li>
                 @if (Model.PasifeAlmaEngeli is null)
@@ -90,7 +116,8 @@
         {
             if (Model.SonHareketler.Count == 0)
             {
-                <partial name="_Bos" model='new BosDurum("receipt", "Henüz hareket yok", "İlk işlemle birlikte hareketler burada listelenir.")' />
+                <partial name="_Bos" model='new BosDurum("receipt", "Henüz hareket yok", "İlk işlemle birlikte hareketler burada listelenir.",
+                    islemYapilabilir ? "İşlem yap" : null, islemYapilabilir ? Url.Action("Yeni", "Islem", new { hesapId = h.HesapId }) : null)' />
             }
             else
             {
@@ -109,7 +136,7 @@
                         <tbody>
                             @foreach (var i in Model.SonHareketler)
                             {
-                                <tr>
+                                <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
                                     <td class="num sessiz">@TurkceBicim.TarihSaat(i.Tarih)</td>
                                     <td><islem-tipi deger="@i.Tip" /></td>
                                     <td class="text-truncate" style="max-width:200px">@i.Aciklama</td>
@@ -132,7 +159,7 @@
                 </div>
                 <div class="panel-alt">
                     <span>Son @Model.SonHareketler.Count hareket; bakiye sütunu güncel bakiyeden geriye hesaplanır.</span>
-                    <span>Toplam @TurkceBicim.Sayi(Model.ToplamHareket) hareket</span>
+                    <a asp-action="Ekstre" asp-route-id="@h.HesapId">Tüm hareketler (@TurkceBicim.Sayi(Model.ToplamHareket)): ekstre</a>
                 </div>
             }
         }

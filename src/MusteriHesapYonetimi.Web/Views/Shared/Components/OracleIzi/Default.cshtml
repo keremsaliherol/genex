@@ -1,0 +1,55 @@
+@using MusteriHesapYonetimi.Data.Izleme
+@model IReadOnlyList<IzGirdisi>
+@{
+    var son = Model.Count > 0 ? Model[0] : null;
+    int? oncekiIstek = null;
+}
+<section class="iz" id="iz" data-acik="false" aria-label="Oracle izi">
+    <div class="iz-bar">
+        <button type="button" class="iz-bar-btn" aria-expanded="false" aria-controls="iz-govde">
+            <ikon ad="terminal-window" class="ic-16" /><strong>Oracle izi</strong>
+            <span class="iz-son">@(son is null ? "Henüz komut yok" : $"{son.Katman}: {son.Baslik}")</span>
+            <ikon ad="caret-up-down" class="ic-14 iz-caret" />
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" data-iz-temizle>Temizle</button>
+    </div>
+    <div class="iz-govde" id="iz-govde">
+        @if (Model.Count == 0)
+        {
+            <p class="iz-bos">Bu tarayıcıda henüz bir veritabanı komutu çalışmadı.</p>
+        }
+        @foreach (var g in Model)
+        {
+            if (g.IstekNo != oncekiIstek)
+            {
+                oncekiIstek = g.IstekNo;
+                <h3 class="iz-istek"><span class="mono">@g.Istek</span><span class="num">@g.Zaman.ToString("HH:mm:ss")</span></h3>
+            }
+            <article class="iz-girdi">
+                <header>
+                    <span class="katman@(g.VeritabaniKodu ? " katman--plsql" : "")">@g.Katman</span>
+                    <span class="baslik">@g.Baslik</span>
+                    <span class="meta">@(g.Satir is { } satir ? $"{TurkceBicim.Sayi(satir)} satır · " : "")@g.SureMs.ToString("0.0", TurkceBicim.Kultur) ms</span>
+                </header>
+                <pre class="sql"><code>@Html.Raw(SqlRenklendirici.Html(g.Sql))</code></pre>
+                @if (g.Parametreler.Count > 0)
+                {
+                    <div class="iz-binds">
+                        @foreach (var p in g.Parametreler)
+                        {
+                            <span><b>:@p.Ad</b> = @p.Deger</span>
+                        }
+                    </div>
+                }
+                @if (g.Hata is not null)
+                {
+                    <div class="iz-not iz-hata">@g.Hata</div>
+                }
+                @if (g.Not is not null)
+                {
+                    <div class="iz-not">@g.Not</div>
+                }
+            </article>
+        }
+    </div>
+</section>

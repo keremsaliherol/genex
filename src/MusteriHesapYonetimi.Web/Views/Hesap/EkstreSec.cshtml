@@ -1,0 +1,22 @@
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Ekstre") };
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>Hesap ekstresi</h1>
+        <div class="alt"><span>Bir hesabın tarih aralığındaki tüm hareketleri ve yürüyen bakiyesi.</span></div>
+    </div>
+</div>
+<section class="panel form-dar">
+    <div class="alan-grubu">
+        <div class="alan">
+            <label class="form-label" for="ekstre-ara">Hesap</label>
+            <div class="secici" data-secici="ekstre">
+                <input id="ekstre-ara" class="form-control" type="text" autocomplete="off" role="combobox" aria-expanded="false"
+                       aria-autocomplete="list" aria-controls="ekstre-liste" aria-describedby="ekstre-yardim" placeholder="Hesap no veya müşteri adı" />
+                <ul id="ekstre-liste" class="secici-liste" role="listbox" aria-label="Hesaplar" hidden></ul>
+            </div>
+            <div id="ekstre-yardim" class="form-text">Pasif hesapların ekstresi de görüntülenebilir. Hesap listesinden de açılabilir: <a asp-action="Index">Hesaplar</a>.</div>
+        </div>
+    </div>
+</section>

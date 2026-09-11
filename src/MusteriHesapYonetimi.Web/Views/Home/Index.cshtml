@@ -10,8 +10,8 @@
         <div class="alt"><span>@TurkceBicim.UzunGun(Model.Bugun)</span></div>
     </div>
     <div class="sayfa-eylem">
-        <a class="btn btn-outline-secondary" asp-controller="Hesap" asp-action="Yeni"><ikon ad="plus" class="ic-16" />Hesap aç</a>
-        <a class="btn btn-primary" asp-controller="Musteri" asp-action="Yeni"><ikon ad="plus" class="ic-16" />Yeni müşteri</a>
+        <a class="btn btn-outline-secondary" asp-controller="Musteri" asp-action="Yeni"><ikon ad="plus" class="ic-16" />Yeni müşteri</a>
+        <a class="btn btn-primary" asp-controller="Islem" asp-action="Yeni"><ikon ad="arrows-left-right" class="ic-16" />İşlem yap</a>
     </div>
 </div>
 
@@ -70,7 +70,7 @@ else
                 <tbody>
                     @foreach (var i in Model.SonIslemler)
                     {
-                        <tr>
+                        <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
                             <td class="num sessiz">@(i.Tarih >= Model.Bugun ? TurkceBicim.Saat(i.Tarih) : TurkceBicim.TarihSaat(i.Tarih))</td>
                             <td><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@i.HesapId">@i.HesapNo</a></td>
                             <td class="text-truncate" style="max-width:200px">@i.MusteriAd</td>

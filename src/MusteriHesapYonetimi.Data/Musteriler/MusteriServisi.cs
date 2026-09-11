@@ -22,8 +22,8 @@ public sealed class MusteriServisi(HesapMasasiDbContext db) : IMusteriServisi
         if (f.Tip is { } tip) sorgu = sorgu.Where(m => m.MusteriTipi == tip);
         if (!string.IsNullOrWhiteSpace(f.Q)) sorgu = Ara(sorgu, f.Q);
 
-        var toplam = await sorgu.CountAsync(ct);
-        var satirlar = sorgu.Select(m => new MusteriListeOgesi
+        var toplam = await sorgu.TagWith("Müşteri sayısı (filtre)").CountAsync(ct);
+        var satirlar = sorgu.TagWith("Müşteri listesi (sayfa, Türkçe sıralama)").Select(m => new MusteriListeOgesi
         {
             Id = m.MusteriId,
             MusteriNo = m.MusteriNo,
@@ -49,10 +49,11 @@ public sealed class MusteriServisi(HesapMasasiDbContext db) : IMusteriServisi
 
     public async Task<MusteriDetay?> DetayAsync(int id, CancellationToken ct = default)
     {
-        var musteri = await db.Musteriler.AsNoTracking().FirstOrDefaultAsync(m => m.MusteriId == id, ct);
+        var musteri = await db.Musteriler.AsNoTracking().TagWith("Müşteri").FirstOrDefaultAsync(m => m.MusteriId == id, ct);
         if (musteri is null) return null;
 
         var hesaplar = await db.Hesaplar.AsNoTracking()
+            .TagWith("Müşterinin hesapları")
             .Where(h => h.MusteriId == id)
             .OrderBy(h => h.EkNo)
             .Select(h => new HesapOzeti
@@ -68,6 +69,7 @@ public sealed class MusteriServisi(HesapMasasiDbContext db) : IMusteriServisi
             .ToListAsync(ct);
 
         var sonIslemler = await db.Islemler.AsNoTracking()
+            .TagWith("Müşterinin son 15 işlemi")
             .Where(i => i.Hesap!.MusteriId == id)
             .OrderByDescending(i => i.IslemTarihi).ThenByDescending(i => i.IslemId)
             .Take(15)
@@ -221,6 +223,7 @@ public sealed class MusteriServisi(HesapMasasiDbContext db) : IMusteriServisi
     /// <summary>Müşterinin hesaplarındaki açık hisse pozisyonu sayısı (VW_PORTFOY), hesap id'sine göre.</summary>
     private Task<Dictionary<int, int>> PozisyonSayilariAsync(int musteriId, CancellationToken ct)
         => db.Portfoy
+            .TagWith("Açık pozisyon sayısı (VW_PORTFOY)")
             .Where(p => db.Hesaplar.Any(h => h.HesapId == p.HesapId && h.MusteriId == musteriId))
             .GroupBy(p => p.HesapId)
             .Select(g => new { HesapId = g.Key, Adet = g.Count() })

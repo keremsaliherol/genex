@@ -2,11 +2,13 @@
 @{
     var kirintilar = ViewData["Kirinti"] as IReadOnlyList<Kirinti> ?? [];
     var baslik = kirintilar.Count > 0 ? kirintilar[^1].Ad : "Genel bakış";
-    var modul = (ViewContext.RouteData.Values["controller"] as string) switch
+    var modul = (ViewContext.RouteData.Values["controller"] as string, ViewContext.RouteData.Values["action"] as string) switch
     {
-        "Home" => "genel",
-        "Musteri" => "musteri",
-        "Hesap" => "hesap",
+        ("Home", _) => "genel",
+        ("Musteri", _) => "musteri",
+        ("Hesap", "Ekstre") => "ekstre",
+        ("Hesap", _) => "hesap",
+        ("Islem", _) => "islem",
         _ => null
     };
     // Sonraki fazlarda açılacak modüller menüde görünür ama tıklanmaz
@@ -15,10 +17,11 @@
         ("genel", "/", "squares-four", "Genel bakış", null),
         ("musteri", "/Musteri", "users", "Müşteriler", null),
         ("hesap", "/Hesap", "wallet", "Hesaplar", null),
-        ("islem", null, "arrows-left-right", "İşlem yap", "Faz 3"),
-        ("ekstre", null, "receipt", "Ekstre", "Faz 3"),
+        ("islem", "/Islem/Yeni", "arrows-left-right", "İşlem yap", null),
+        ("ekstre", "/Hesap/Ekstre", "receipt", "Ekstre", null),
         ("rapor", null, "chart-line", "Raporlar", "Faz 4")
     };
+    var izGirdileri = OracleIzUzantilari.Girdiler(Context);
     var bildirim = TempData["Bildirim"] as string;
     var bildirimHata = TempData["BildirimTur"] as string == "hata";
     var geriAl = TempData["BildirimGeriAl"] as string;
@@ -48,7 +51,7 @@
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/uygulama.css" asp-append-version="true" />
 </head>
-<body class="iz-yok" data-sprite="@Surum.AddFileVersionToPath(Context.Request.PathBase, IkonluTagHelper.SpriteYolu)">
+<body class="@(izGirdileri is null ? "iz-yok" : null)" data-sprite="@Surum.AddFileVersionToPath(Context.Request.PathBase, IkonluTagHelper.SpriteYolu)">
     <a class="skip-link" href="#icerik">İçeriğe atla</a>
     <div class="hm-shell" id="kabuk">
         <aside class="hm-sidebar" id="yan-menu" aria-label="Ana menü">
@@ -105,6 +108,12 @@
                     <div class="hm-search-results" id="arama-sonuc" role="listbox" aria-label="Arama sonuçları" hidden></div>
                 </div>
                 <div class="hm-top-eylem">
+                    @if (izGirdileri is not null)
+                    {
+                        <button type="button" class="btn btn-ghost" id="iz-dugme" aria-pressed="false" aria-controls="iz" title="Oracle izi (Alt+O)">
+                            <ikon ad="database" /><span class="etiket">Oracle izi</span><span class="iz-sayac" id="iz-sayac">@izGirdileri.Count</span>
+                        </button>
+                    }
                     <div class="dropdown">
                         <button type="button" class="btn btn-ghost" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Kullanıcı menüsü">
                             <span class="hm-avatar" aria-hidden="true">AD</span><span class="etiket">admin</span><ikon ad="caret-down" class="ic-14" />
@@ -125,6 +134,8 @@
             </main>
         </div>
     </div>
+
+    @await Component.InvokeAsync("OracleIzi")
 
     <div class="toast-alani" id="toast-alani" aria-live="polite">
         @if (bildirim is not null)

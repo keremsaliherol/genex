@@ -1,0 +1,131 @@
+@model Ekstre
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("Hesaplar", "/Hesap"), new(Model.HesapNo, Url.Action("Detay", new { id = Model.HesapId })), new("Ekstre") };
+    var donemler = new (EkstreDonemi Donem, string Ad)[]
+    {
+        (EkstreDonemi.BuAy, "Bu ay"), (EkstreDonemi.GecenAy, "Geçen ay"), (EkstreDonemi.SonUcAy, "Son 3 ay"), (EkstreDonemi.Ozel, "Özel")
+    };
+    IslemTipi[] tipler = [IslemTipi.Yatirma, IslemTipi.Cekme, IslemTipi.TransferGelen, IslemTipi.TransferGiden, IslemTipi.Alim, IslemTipi.Satim];
+    var bugun = DateTime.Today.ToString("yyyy-MM-dd");
+    var csv = Url.Action("EkstreCsv", new { id = Model.HesapId }) + Context.Request.QueryString;
+    var donemMetni = $"{TurkceBicim.Tarih(Model.Bas)} - {TurkceBicim.Tarih(Model.Bit)}";
+    DateTime? oncekiGun = null;
+}
+<div class="baski-bas">
+    <div><strong>Demo Menkul Değerler A.Ş. (kurgusal)</strong><br />Hesap ekstresi, @Model.MusteriAd</div>
+    <div class="text-end mono">@Model.HesapNo<br />@donemMetni</div>
+</div>
+
+<div class="sayfa-bas">
+    <div>
+        <h1>Hesap ekstresi</h1>
+        <div class="alt">
+            <a class="mono" asp-action="Detay" asp-route-id="@Model.HesapId">@Model.HesapNo</a>
+            <a asp-controller="Musteri" asp-action="Detay" asp-route-id="@Model.MusteriId">@Model.MusteriAd</a>
+            <hesap-tipi deger="@Model.HesapTipi" />
+            <span>@donemMetni</span>
+        </div>
+    </div>
+    <div class="sayfa-eylem">
+        <a class="btn btn-outline-secondary" href="@csv"><ikon ad="file-csv" class="ic-16" />CSV</a>
+        <button type="button" class="btn btn-outline-secondary" data-yazdir><ikon ad="printer" class="ic-16" />Yazdır</button>
+    </div>
+</div>
+
+<section class="panel mb-3">
+    <form method="get" asp-action="Ekstre" asp-route-id="@Model.HesapId" class="filtre-cubugu" data-ekstre-form>
+        <div class="segment" role="radiogroup" aria-label="Dönem">
+            @foreach (var (donem, ad) in donemler)
+            {
+                <input type="radio" name="on" id="on-@donem" value="@donem.ToString().ToLowerInvariant()" checked="@(Model.Donem == donem)" /><label for="on-@donem">@ad</label>
+            }
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="visually-hidden" for="e-bas">Başlangıç</label>
+            <input type="date" id="e-bas" name="bas" class="form-control" value="@Model.Bas.ToString("yyyy-MM-dd")" max="@bugun" />
+            <span class="text-secondary">-</span>
+            <label class="visually-hidden" for="e-bit">Bitiş</label>
+            <input type="date" id="e-bit" name="bit" class="form-control" value="@Model.Bit.ToString("yyyy-MM-dd")" max="@bugun" />
+        </div>
+        <div class="dropdown">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                <ikon ad="funnel-simple" class="ic-16" />@(Model.Tipler.Count > 0 ? $"{Model.Tipler.Count} işlem tipi" : "Tüm işlem tipleri")
+            </button>
+            <div class="dropdown-menu p-2" style="min-width:220px">
+                @foreach (var tip in tipler)
+                {
+                    <div class="form-check dropdown-item">
+                        <input class="form-check-input" type="checkbox" name="tip" id="et-@tip" value="@tip" checked="@Model.Tipler.Contains(tip)" />
+                        <label class="form-check-label flex-grow-1" for="et-@tip">@Etiketler.IslemEtiketi(tip).Ad</label>
+                    </div>
+                }
+            </div>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary btn-sm" data-js-gizle>Uygula</button>
+    </form>
+    <div class="kpi-serit">
+        <div class="kpi"><span class="etiket">Dönem başı bakiye</span><span class="deger tutar">@TurkceBicim.Para(Model.Ozet.Acilis)</span></div>
+        <div class="kpi"><span class="etiket">Toplam giriş</span><span class="deger"><tutar deger="@Model.Ozet.Giris" isaretli="true" /></span><span class="ek">@Model.Ozet.GirisAdedi işlem</span></div>
+        <div class="kpi"><span class="etiket">Toplam çıkış</span><span class="deger"><tutar deger="@(-Model.Ozet.Cikis)" isaretli="true" /></span><span class="ek">@Model.Ozet.CikisAdedi işlem</span></div>
+        <div class="kpi"><span class="etiket">Dönem sonu bakiye</span><span class="deger tutar">@TurkceBicim.Para(Model.Ozet.Kapanis)</span></div>
+    </div>
+</section>
+
+<section class="panel">
+    @if (Model.Satirlar.Count == 0)
+    {
+        <partial name="_Bos" model='new BosDurum("calendar-blank", "Bu aralıkta hareket yok",
+            "Tarih aralığını genişletin veya tip filtresini kaldırın.", "Son 3 ayı göster",
+            Url.Action("Ekstre", new { id = Model.HesapId, on = "sonucay" }), EylemBirincil: false)' />
+    }
+    else
+    {
+        <div class="tablo-kap">
+            <table class="table table-hover tablo">
+                <thead>
+                    <tr>
+                        <th scope="col">Zaman</th>
+                        <th scope="col">İşlem no</th>
+                        <th scope="col">İşlem</th>
+                        <th scope="col">Açıklama</th>
+                        <th scope="col">Karşı hesap</th>
+                        <th scope="col" class="num">Tutar</th>
+                        <th scope="col" class="num">Bakiye</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var i in Model.Satirlar)
+                    {
+                        if (oncekiGun != i.Tarih.Date)
+                        {
+                            oncekiGun = i.Tarih.Date;
+                            <tr class="gun-ayrac"><td colspan="7">@TurkceBicim.UzunGun(i.Tarih)</td></tr>
+                        }
+                        <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
+                            <td class="num sessiz">@TurkceBicim.Saat(i.Tarih)</td>
+                            <td class="num sessiz">@i.Id</td>
+                            <td><islem-tipi deger="@i.Tip" /></td>
+                            <td class="text-truncate" style="max-width:280px">@i.Aciklama</td>
+                            <td>
+                                @if (i.KarsiHesapId is { } karsi)
+                                {
+                                    <a class="mono" asp-action="Detay" asp-route-id="@karsi">@i.KarsiHesapNo</a>
+                                }
+                                else
+                                {
+                                    <span class="text-secondary">Yok</span>
+                                }
+                            </td>
+                            <td class="num"><tutar deger="@i.IsaretliTutar" isaretli="true" /></td>
+                            <td class="num"><tutar deger="@(i.BakiyeSonra ?? 0)" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<p class="demo-not mt-2">
+    @(Model.Tipler.Count > 0 ? "Tip filtresi uygulandı; özet ve yürüyen bakiye tüm işlemleri içerir. " : "")Dönem başı + giriş - çıkış = dönem sonu.
+    Yürüyen bakiye veritabanında SUM() OVER ile hesaplanır. Demo belgesidir.
+</p>

@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using MusteriHesapYonetimi.Application.Sistem;
+using MusteriHesapYonetimi.Data.Izleme;
 
 namespace MusteriHesapYonetimi.Data.Sistem;
 
@@ -19,7 +20,7 @@ public sealed class SistemDurumuSorgusu(OracleBaglantiFabrikasi fabrika, HesapMa
     public async Task<VeritabaniDurumu> OkuAsync(CancellationToken ct = default)
     {
         await using var baglanti = await fabrika.AcAsync(ct);
-        var durum = await baglanti.QuerySingleAsync<VeritabaniDurumu>(new CommandDefinition(Sql, cancellationToken: ct));
+        var durum = await baglanti.QuerySingleIzliAsync<VeritabaniDurumu>("Sağlık kontrolü", new CommandDefinition(Sql, cancellationToken: ct));
 
         // Aynı veriyi EF Core ile de oku: iki erişim yolu (Dapper + EF Core) aynı şemayı görüyor.
         durum.AktifMusteri = await db.Musteriler.CountAsync(m => m.Aktif, ct);

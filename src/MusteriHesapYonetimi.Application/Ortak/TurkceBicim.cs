@@ -34,6 +34,9 @@ public static class TurkceBicim
     public static string Sayi(long sayi) => sayi.ToString("N0", Kultur);
     public static string Tarih(DateTime t) => t.ToString("dd.MM.yyyy", Kultur);
     public static string TarihSaat(DateTime t) => t.ToString("dd.MM.yyyy HH:mm", Kultur);
+
+    /// <summary>Dekonttaki işlem zamanı: 10.09.2026 14:32:05.123 (ISLEM_TARIHI TIMESTAMP).</summary>
+    public static string TarihSaatSaniye(DateTime t) => t.ToString("dd.MM.yyyy HH:mm:ss.fff", Kultur);
     public static string Saat(DateTime t) => t.ToString("HH:mm", Kultur);
     public static string UzunGun(DateTime t) => t.ToString("d MMMM yyyy dddd", Kultur);
 }

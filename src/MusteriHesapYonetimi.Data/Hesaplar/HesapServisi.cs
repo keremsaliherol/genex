@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using MusteriHesapYonetimi.Application.Hesaplar;
 using MusteriHesapYonetimi.Application.Musteriler;
 using MusteriHesapYonetimi.Application.Ortak;
+using MusteriHesapYonetimi.Data.Izleme;
 using MusteriHesapYonetimi.Domain;
 using Oracle.ManagedDataAccess.Client;
 using static MusteriHesapYonetimi.Data.OracleFonksiyonlari;
@@ -34,9 +35,9 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
         if (f.MusteriId is { } musteriId) sorgu = sorgu.Where(h => h.MusteriId == musteriId);
         if (!string.IsNullOrWhiteSpace(f.Q)) sorgu = Ara(sorgu, f.Q);
 
-        var toplam = await sorgu.CountAsync(ct);
-        var toplamBakiye = toplam == 0 ? 0 : await sorgu.SumAsync(h => h.Bakiye, ct);
-        var satirlar = sorgu.Select(h => new HesapListeOgesi
+        var toplam = await sorgu.TagWith("Hesap sayısı (filtre)").CountAsync(ct);
+        var toplamBakiye = toplam == 0 ? 0 : await sorgu.TagWith("Filtrelenen hesapların toplam bakiyesi").SumAsync(h => h.Bakiye, ct);
+        var satirlar = sorgu.TagWith("Hesap listesi (sayfa)").Select(h => new HesapListeOgesi
         {
             Id = h.HesapId,
             HesapNo = h.HesapNo,
@@ -47,6 +48,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
             Bakiye = h.Bakiye,
             AcilisTarihi = h.AcilisTarihi,
             Aktif = h.Aktif,
+            MusteriAktif = h.Musteri.Aktif,
             SonHareket = h.Islemler.Max(i => (DateTime?)i.IslemTarihi)
         });
         var sirali = f.Sirala switch
@@ -69,7 +71,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
 
     public async Task<HesapDetay?> DetayAsync(int id, CancellationToken ct = default)
     {
-        var hesap = await db.Hesaplar.AsNoTracking().Include(h => h.Musteri).FirstOrDefaultAsync(h => h.HesapId == id, ct);
+        var hesap = await db.Hesaplar.AsNoTracking().TagWith("Hesap ve sahibi").Include(h => h.Musteri).FirstOrDefaultAsync(h => h.HesapId == id, ct);
         if (hesap?.Musteri is null) return null;
 
         var simdi = DateTime.Now;
@@ -77,6 +79,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
         var otuzGunOnce = DateTime.Today.AddDays(-29);
 
         var sonHareketler = await db.Islemler.AsNoTracking()
+            .TagWith("Son 20 hareket")
             .Where(i => i.HesapId == id)
             .OrderByDescending(i => i.IslemTarihi).ThenByDescending(i => i.IslemId)
             .Take(20)
@@ -86,6 +89,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
 
         // Son 90 gün: bakiye çizgisi ve son 30 günün giriş/çıkış toplamı (IDX_ISLEM_HESAP_TARIH)
         var doksanGun = await db.Islemler.AsNoTracking()
+            .TagWith("Son 90 günün hareketleri (bakiye çizgisi)")
             .Where(i => i.HesapId == id && i.IslemTarihi >= doksanGunOnce)
             .OrderByDescending(i => i.IslemTarihi).ThenByDescending(i => i.IslemId)
             .Select(i => new { i.IslemTarihi, i.IslemTipi, i.Tutar })
@@ -94,7 +98,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
         var otuzGun = hareketler.Where(h => h.Zaman >= otuzGunOnce).ToList();
 
         var portfoy = hesap.HesapTipi == HesapTipi.Yatirim
-            ? await db.Portfoy.AsNoTracking().Where(p => p.HesapId == id).OrderBy(p => p.HisseKodu).ToListAsync(ct)
+            ? await db.Portfoy.AsNoTracking().TagWith("Portföy (VW_PORTFOY)").Where(p => p.HesapId == id).OrderBy(p => p.HisseKodu).ToListAsync(ct)
             : [];
 
         return new HesapDetay
@@ -106,7 +110,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
             BakiyeGecmisi = BakiyeGecmisi.Noktalar(hesap.Bakiye, hareketler, doksanGunOnce, simdi),
             Giris30 = otuzGun.Where(h => h.IsaretliTutar > 0).Sum(h => h.IsaretliTutar),
             Cikis30 = -otuzGun.Where(h => h.IsaretliTutar < 0).Sum(h => h.IsaretliTutar),
-            ToplamHareket = await db.Islemler.CountAsync(i => i.HesapId == id, ct),
+            ToplamHareket = await db.Islemler.TagWith("Toplam hareket sayısı").CountAsync(i => i.HesapId == id, ct),
             PasifeAlmaEngeli = HesapKurallari.PasifeAlmaEngeli(new HesapDurumu(hesap.HesapNo, hesap.Aktif, hesap.Bakiye, portfoy.Count))
         };
     }
@@ -175,7 +179,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
                 .Cikti("islem_id", OracleDbType.Int64);
             try
             {
-                await db.Database.GetDbConnection().ExecuteAsync(
+                await db.Database.GetDbConnection().ExecuteIzliAsync("PKG_ISLEM.YATIR (açılış bakiyesi)",
                     new CommandDefinition(YatirSql, parametreler, tx.GetDbTransaction(), cancellationToken: ct));
             }
             catch (OracleException ex) when (OracleHatalari.UygulamaHatasiMi(ex))
@@ -216,7 +220,7 @@ public sealed class HesapServisi(HesapMasasiDbContext db) : IHesapServisi
         return await Ara(db.Hesaplar.AsNoTracking(), q)
             .OrderByDescending(h => h.Aktif).ThenBy(h => h.HesapNo)
             .Take(adet)
-            .Select(h => new HesapAramaSonucu(h.HesapId, h.HesapNo, h.Musteri!.AdSoyad, h.HesapTipi, h.Bakiye, h.Aktif))
+            .Select(h => new HesapAramaSonucu(h.HesapId, h.HesapNo, h.Musteri!.AdSoyad, h.HesapTipi, h.Bakiye, h.Aktif, h.Musteri.Aktif))
             .ToListAsync(ct);
     }
 

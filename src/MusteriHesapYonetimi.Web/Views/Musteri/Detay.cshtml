@@ -106,6 +106,7 @@
                                 <th scope="col">Açılış</th>
                                 <th scope="col">Son hareket</th>
                                 <th scope="col">Durum</th>
+                                <th scope="col"><span class="visually-hidden">Eylemler</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -119,6 +120,13 @@
                                     <td class="num sessiz">@TurkceBicim.Tarih(h.AcilisTarihi)</td>
                                     <td class="num sessiz">@(h.SonHareket is { } t ? TurkceBicim.Tarih(t) : "Yok")</td>
                                     <td><durum aktif="@h.Aktif" /></td>
+                                    <td class="text-end text-nowrap">
+                                        <a class="btn btn-ghost btn-sm" asp-controller="Hesap" asp-action="Ekstre" asp-route-id="@h.Id">Ekstre</a>
+                                        @if (m.Aktif && h.Aktif)
+                                        {
+                                            <a class="btn btn-ghost btn-sm" asp-controller="Islem" asp-action="Yeni" asp-route-hesapId="@h.Id">İşlem yap</a>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -146,7 +154,7 @@
                     <tbody>
                         @foreach (var i in Model.SonIslemler)
                         {
-                            <tr>
+                            <tr class="tiklanir" data-href="@Url.Action("Dekont", "Islem", new { id = i.Id })">
                                 <td class="num sessiz">@TurkceBicim.TarihSaat(i.Tarih)</td>
                                 <td><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@i.HesapId">@i.HesapNo</a></td>
                                 <td><islem-tipi deger="@i.Tip" /></td>

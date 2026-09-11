@@ -1,0 +1,95 @@
+@model Dekont
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("İşlem yap", "/Islem/Yeni"), new($"Dekont {Model.Id}") };
+    var giris = Model.Tip.BakiyeEtkisi() > 0;
+}
+<div class="baski-bas">
+    <div><strong>Demo Menkul Değerler A.Ş. (kurgusal)</strong><br />İşlem dekontu</div>
+    <div class="text-end mono">No @Model.Id<br />@TurkceBicim.TarihSaat(Model.Tarih)</div>
+</div>
+
+<div class="sayfa-bas">
+    <div>
+        <h1>İşlem dekontu</h1>
+        <div class="alt"><span class="mono">İşlem no @Model.Id</span><islem-tipi deger="@Model.Tip" /></div>
+    </div>
+    <div class="sayfa-eylem">
+        <button type="button" class="btn btn-outline-secondary" data-yazdir><ikon ad="printer" class="ic-16" />Yazdır</button>
+        <a class="btn btn-outline-secondary" asp-controller="Hesap" asp-action="Detay" asp-route-id="@Model.HesapId">Hesaba git</a>
+        @if (Model.IslemYapilabilir)
+        {
+            <a class="btn btn-primary" asp-action="Yeni" asp-route-hesapId="@Model.HesapId">Yeni işlem</a>
+        }
+    </div>
+</div>
+
+<section class="panel dekont">
+    <div class="dekont-bas">
+        <div>
+            <h2>@Etiketler.IslemEtiketi(Model.Tip).Ad</h2>
+            <div class="form-text m-0">@Model.Aciklama</div>
+        </div>
+        <div class="text-end">
+            <div class="dekont-tutar">@TurkceBicim.Para(Model.Tutar)</div>
+            <div class="form-text m-0">@(giris ? "Hesaba giriş" : "Hesaptan çıkış")</div>
+        </div>
+    </div>
+    <dl class="dl-liste">
+        <dt>İşlem zamanı</dt><dd class="num">@TurkceBicim.TarihSaatSaniye(Model.Tarih)</dd>
+        @if (Model.ReferansNo is not null)
+        {
+            <dt>Referans no</dt><dd class="num">@Model.ReferansNo</dd>
+        }
+        <dt>Hesap</dt>
+        <dd><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@Model.HesapId">@Model.HesapNo</a><br /><span class="text-secondary">@Model.MusteriAd, @Model.MusteriNo</span></dd>
+        @if (Model.KarsiHesapId is { } karsi)
+        {
+            <dt>Karşı hesap</dt>
+            <dd><a class="mono" asp-controller="Hesap" asp-action="Detay" asp-route-id="@karsi">@Model.KarsiHesapNo</a><br /><span class="text-secondary">@Model.KarsiMusteriAd</span></dd>
+        }
+        @if (Model.HisseKodu is not null)
+        {
+            <dt>Hisse</dt><dd class="num">@Model.HisseKodu, @TurkceBicim.Sayi(Model.Adet ?? 0) adet × @TurkceBicim.Para(Model.BirimFiyat ?? 0) (temsili)</dd>
+        }
+        <dt>İşlem sonrası bakiye</dt><dd class="num fw-semibold">@TurkceBicim.Para(Model.BakiyeSonra)</dd>
+    </dl>
+
+    @if (Model.Kayitlar.Count > 1)
+    {
+        <div class="panel-bas border-top">
+            <div><h2>Oluşan kayıtlar</h2><div class="aciklama">@Model.Kayitlar.Count kayıt, tek transaction, aynı referans</div></div>
+        </div>
+        <div class="tablo-kap">
+            <table class="table tablo">
+                <thead>
+                    <tr>
+                        <th scope="col">ISLEM_ID</th>
+                        <th scope="col">Hesap</th>
+                        <th scope="col">Tip</th>
+                        <th scope="col" class="num">Tutar</th>
+                        <th scope="col" class="num">Sonraki bakiye</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var k in Model.Kayitlar)
+                    {
+                        <tr class="@(k.Id == Model.Id ? "table-active" : null)">
+                            <td class="num">@k.Id</td>
+                            <td class="mono">@k.HesapNo</td>
+                            <td><islem-tipi deger="@k.Tip" /></td>
+                            <td class="num"><tutar deger="@k.IsaretliTutar" isaretli="true" /></td>
+                            <td class="num"><tutar deger="@(k.BakiyeSonra ?? 0)" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    <div class="panel-alt">
+        <span>Bu dekont demo amaçlıdır; kurgusal veriler içerir.</span>
+        @if (OracleIzUzantilari.Girdiler(Context) is not null)
+        {
+            <button type="button" class="btn btn-ghost btn-sm baski-gizle" data-iz-ac><ikon ad="database" class="ic-16" />Oracle izi: işlemin SQL'i</button>
+        }
+    </div>
+</section>

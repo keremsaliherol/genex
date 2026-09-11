@@ -1,0 +1,173 @@
+@using System.Text.Json
+@using MusteriHesapYonetimi.Web.Api
+@model IslemKaydi
+@{
+    ViewData["Kirinti"] = new List<Kirinti> { new("İşlem yap") };
+    var hesap = ViewData["Hesap"] as IslemHesabi;
+    var hedef = ViewData["Hedef"] as IslemHesabi;
+    var hisseler = ViewData["Hisseler"] as IReadOnlyList<HisseFiyati> ?? [];
+    var dbHatasi = ViewData["DbHatasi"] as AlanHatasi;
+    var geri = hesap is null ? Url.Content("~/") : Url.Action("Detay", "Hesap", new { id = hesap.Id });
+    var turler = new (IslemTuru Tur, string Ad, string Ikon)[]
+    {
+        (IslemTuru.Yatirma, "Para yatır", "arrow-down-left"),
+        (IslemTuru.Cekme, "Para çek", "arrow-up-right"),
+        (IslemTuru.Transfer, "Transfer", "arrows-left-right"),
+        (IslemTuru.Alim, "Hisse al", "trend-up"),
+        (IslemTuru.Satim, "Hisse sat", "trend-down")
+    };
+    string Json(object? deger) => deger is null ? "" : JsonSerializer.Serialize(deger, JsonSerializerOptions.Web);
+    string Hatali(string alan) => ViewData.ModelState[alan]?.Errors.Count > 0 ? " input-validation-error" : "";
+}
+<div class="sayfa-bas">
+    <div>
+        <h1>İşlem yap</h1>
+        <div class="alt"><span>Her işlem PKG_ISLEM paketinden geçer; bakiye trigger ile güncellenir.</span></div>
+    </div>
+</div>
+
+<div class="izgara-7-5">
+    <form method="post" class="panel" id="if" novalidate data-hisseler="@Json(hisseler.Select(h => new { kod = h.Kod, ad = h.Ad, fiyat = h.Fiyat }))">
+        @if (dbHatasi is not null)
+        {
+            <div class="p-3 pb-0">
+                <div class="uyari uyari--hata" role="alert">
+                    <ikon ad="warning-circle" />
+                    <div>
+                        <strong>İşlem veritabanında reddedildi.</strong>
+                        <p>@dbHatasi.Mesaj Hiçbir kayıt yazılmadı, bakiyeler değişmedi.</p>
+                    </div>
+                    <details>
+                        <summary>Teknik detay</summary>
+                        <code>@dbHatasi.Kod: @dbHatasi.Mesaj (PKG_ISLEM, RAISE_APPLICATION_ERROR)</code>
+                    </details>
+                    @if (OracleIzUzantilari.Girdiler(Context) is not null)
+                    {
+                        <div class="eylem"><button type="button" class="btn btn-outline-secondary btn-sm" data-iz-ac><ikon ad="database" class="ic-16" />Oracle izini aç</button></div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <partial name="_HataOzeti" />
+        }
+
+        <div class="alan-grubu">
+            <h2>Hesap</h2>
+            <div class="alan">
+                <label class="form-label" for="hesap-ara">Kaynak hesap<span class="zorunlu" aria-hidden="true">*</span></label>
+                <div class="secici" data-secici="kaynak" data-deger="@Json(hesap is null ? null : IslemApi.Hesap(hesap))">
+                    <input id="hesap-ara" class="form-control@(Hatali("HesapId"))" type="text" autocomplete="off" role="combobox"
+                           aria-expanded="false" aria-autocomplete="list" aria-controls="hesap-liste" aria-required="true"
+                           aria-describedby="hesap-yardim HesapId-hata" placeholder="Hesap no veya müşteri adı" value="@hesap?.HesapNo" data-yerine="HesapId" />
+                    <ul id="hesap-liste" class="secici-liste" role="listbox" aria-label="Hesaplar" hidden></ul>
+                </div>
+                <input type="hidden" asp-for="HesapId" />
+                <div id="hesap-yardim" class="form-text">Pasif hesaplar listede seçilemez.</div>
+                <span asp-validation-for="HesapId" id="HesapId-hata" class="invalid-feedback"></span>
+            </div>
+            <div id="secili-hesap" aria-live="polite"></div>
+        </div>
+
+        <div class="alan-grubu">
+            <h2 id="tip-baslik">İşlem tipi</h2>
+            <div class="alan">
+                <div class="segment segment-buyuk" role="radiogroup" aria-labelledby="tip-baslik">
+                    @foreach (var (tur, ad, ikon) in turler)
+                    {
+                        <input type="radio" name="Tur" id="tur-@tur" value="@tur" checked="@(Model.Tur == tur)" /><label for="tur-@tur"><ikon ad="@ikon" class="ic-16" />@ad</label>
+                    }
+                </div>
+                <div class="form-text" id="tip-not"></div>
+                <span asp-validation-for="Tur" id="Tur-hata" class="invalid-feedback"></span>
+            </div>
+        </div>
+
+        <div class="alan-grubu">
+            <h2 data-alan-baslik>Tutar</h2>
+
+            <div class="alan" data-tur-alan="transfer">
+                <label class="form-label" for="hedef-ara">Hedef hesap<span class="zorunlu" aria-hidden="true">*</span></label>
+                <div class="secici" data-secici="hedef" data-deger="@Json(hedef is null ? null : IslemApi.Hesap(hedef))">
+                    <input id="hedef-ara" class="form-control@(Hatali("HedefHesapId"))" type="text" autocomplete="off" role="combobox"
+                           aria-expanded="false" aria-autocomplete="list" aria-controls="hedef-liste" aria-required="true"
+                           aria-describedby="hedef-yardim HedefHesapId-hata" placeholder="Hesap no veya müşteri adı" value="@hedef?.HesapNo" data-yerine="HedefHesapId" />
+                    <ul id="hedef-liste" class="secici-liste" role="listbox" aria-label="Hedef hesaplar" hidden></ul>
+                </div>
+                <input type="hidden" asp-for="HedefHesapId" />
+                <div id="hedef-yardim" class="form-text">Başka bir müşterinin hesabı da olabilir.</div>
+                <span asp-validation-for="HedefHesapId" id="HedefHesapId-hata" class="invalid-feedback"></span>
+            </div>
+
+            <div class="alan-satir" data-tur-alan="hisse">
+                <div class="alan">
+                    <label class="form-label" asp-for="HisseKodu">Hisse<span class="zorunlu" aria-hidden="true">*</span></label>
+                    <select asp-for="HisseKodu" class="form-select" aria-describedby="hisse-not HisseKodu-hata">
+                        <option value="">Seçin</option>
+                        @foreach (var h in hisseler)
+                        {
+                            <option value="@h.Kod">@h.Kod, @h.Ad (@TurkceBicim.Para(h.Fiyat))</option>
+                        }
+                    </select>
+                    <div class="form-text" id="hisse-not"></div>
+                    <span asp-validation-for="HisseKodu" id="HisseKodu-hata" class="invalid-feedback"></span>
+                </div>
+                <div class="alan">
+                    <label class="form-label" asp-for="Adet">Adet<span class="zorunlu" aria-hidden="true">*</span></label>
+                    <input asp-for="Adet" type="number" min="1" step="1" inputmode="numeric" class="form-control mono" style="max-width:160px" aria-describedby="Adet-hata" />
+                    <span asp-validation-for="Adet" id="Adet-hata" class="invalid-feedback"></span>
+                </div>
+            </div>
+            <div class="alan" data-tur-alan="hisse">
+                <label class="form-label" for="hesaplanan">Hesaplanan tutar</label>
+                <input id="hesaplanan" class="form-control mono" readonly style="max-width:260px" aria-describedby="hesaplanan-yardim" />
+                <div class="form-text" id="hesaplanan-yardim">Adet × temsili fiyat. Fiyatlar gerçek piyasa verisi değildir.</div>
+            </div>
+
+            <div class="alan" data-tur-alan="tutar">
+                <label class="form-label" asp-for="Tutar">Tutar<span class="zorunlu" aria-hidden="true">*</span></label>
+                <div class="giris-grubu" style="max-width:260px">
+                    <span class="onek">₺</span>
+                    <input asp-for="Tutar" class="form-control tutar-girdi" inputmode="decimal" placeholder="0,00" autocomplete="off" aria-describedby="Tutar-hata" data-tutar-girdi />
+                </div>
+                <span asp-validation-for="Tutar" id="Tutar-hata" class="invalid-feedback"></span>
+            </div>
+            <div class="alan" data-tur-alan="tutar">
+                <label class="form-label" asp-for="Aciklama">Açıklama</label>
+                <input asp-for="Aciklama" class="form-control" maxlength="300" placeholder="Örnek: Nakit yatırma, Kadıköy şube" aria-describedby="aciklama-yardim Aciklama-hata" />
+                <div class="form-text d-flex justify-content-between" id="aciklama-yardim"><span>ACIKLAMA, en fazla 300 karakter.</span><span class="num" id="aciklama-sayac">0/300</span></div>
+                <span asp-validation-for="Aciklama" id="Aciklama-hata" class="invalid-feedback"></span>
+            </div>
+        </div>
+
+        <div class="form-eylem-cubugu">
+            <span class="durum-metni">Onaydan önce özet gösterilir.</span>
+            <a class="btn btn-ghost" href="@geri">Vazgeç</a>
+        </div>
+    </form>
+
+    <aside class="panel onizleme" aria-labelledby="oniz-baslik">
+        <div class="panel-bas"><h2 id="oniz-baslik">Önizleme</h2><span class="aciklama" id="oniz-alt"></span></div>
+        <div id="oniz" aria-live="polite">
+            <partial name="_Bos" model='new BosDurum("wallet", "Hesap seçin", "Önizleme; işlemin hangi kayıtları oluşturacağını ve bakiyeyi nasıl değiştireceğini gösterir.")' />
+        </div>
+        <div class="p-3 border-top d-grid gap-2">
+            <button type="submit" form="if" class="btn btn-primary" id="i-onayla">İşlemi onayla</button>
+            <div id="i-zorla"></div>
+        </div>
+    </aside>
+</div>
+
+<div class="modal fade" id="islem-onay" tabindex="-1" aria-labelledby="islem-onay-baslik" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title" id="islem-onay-baslik">İşlemi onaylıyor musunuz?</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
+            <div class="modal-body" id="islem-ozet"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-primary" data-islem-gonder>Onayla ve gönder</button>
+            </div>
+        </div>
+    </div>
+</div>

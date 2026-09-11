@@ -46,6 +46,7 @@ public sealed class HesapListeOgesi
     public DateTime AcilisTarihi { get; init; }
     public DateTime? SonHareket { get; init; }
     public bool Aktif { get; init; }
+    public bool MusteriAktif { get; init; }
 }
 
 public sealed class HesapListesi
@@ -106,4 +107,4 @@ public sealed class HesapAcmaKaydi
 
 public sealed record HesapAcildi(int HesapId, string HesapNo, decimal? AcilisTutari);
 
-public sealed record HesapAramaSonucu(int Id, string HesapNo, string MusteriAd, HesapTipi Tip, decimal Bakiye, bool Aktif);
+public sealed record HesapAramaSonucu(int Id, string HesapNo, string MusteriAd, HesapTipi Tip, decimal Bakiye, bool Aktif, bool MusteriAktif);
