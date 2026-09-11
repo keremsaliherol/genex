@@ -11,6 +11,20 @@
     // Oran çubuğunun genişliği CSS'e gider: kültürden bağımsız ondalık nokta
     string Genislik(int n) => (n * 100.0 / Math.Max(1, Model.AcikHesap)).ToString("0.##", CultureInfo.InvariantCulture);
     string Yuzde(int n) => "%" + Math.Round(n * 100.0 / Math.Max(1, Model.AcikHesap)).ToString("0", CultureInfo.InvariantCulture);
+
+    // Kahramandaki çizgi: son 30 günün birikimli net nakit akışı (yatırma - çekme), sıfırdan başlar
+    decimal birikim = 0;
+    var netCizgi = new List<BakiyeNoktasi>();
+    if (Model.NakitAkisi.Count > 0)
+    {
+        netCizgi.Add(new BakiyeNoktasi(Model.NakitAkisi[0].Gun, 0));
+        foreach (var g in Model.NakitAkisi)
+        {
+            birikim += g.Net;
+            netCizgi.Add(new BakiyeNoktasi(g.Gun.AddDays(1), birikim));
+        }
+    }
+    ViewData["CizgiEtiketi"] = "Son 30 günde birikimli net nakit akışı";
 }
 <div class="sayfa-bas">
     <div>
@@ -33,30 +47,64 @@
 }
 else
 {
-    <section class="panel mb-3" aria-label="Özet göstergeler">
-        <div class="kpi-serit">
+    <section class="panel kahraman" aria-label="Özet göstergeler">
+        <div class="kahraman-ana">
+            <span class="etiket">Toplam bakiye</span>
+            <span class="kahraman-deger">@TurkceBicim.ParaKisa(Model.ToplamBakiye)</span>
+            <span class="ek">@TurkceBicim.Para(Model.ToplamBakiye), @TurkceBicim.Sayi(Model.AcikHesap) açık hesapta</span>
+            @if (netCizgi.Count > 1)
+            {
+                <div class="kahraman-cizgi">
+                    <partial name="_BakiyeCizgisi" model="netCizgi" />
+                    <div class="aciklama"><span>Son 30 gün, birikimli net nakit akışı</span><tutar deger="@birikim" isaretli="true" /></div>
+                </div>
+            }
+        </div>
+        <div class="kahraman-yan">
             <div class="kpi">
                 <span class="etiket">Aktif müşteri</span>
-                <span class="deger">@TurkceBicim.Sayi(Model.AktifMusteri)</span>
+                <span class="deger" data-sayac="@Model.AktifMusteri">@TurkceBicim.Sayi(Model.AktifMusteri)</span>
                 <span class="ek">@TurkceBicim.Sayi(bireysel) bireysel, @TurkceBicim.Sayi(Model.KurumsalMusteri) kurumsal</span>
             </div>
             <div class="kpi">
                 <span class="etiket">Açık hesap</span>
-                <span class="deger">@TurkceBicim.Sayi(Model.AcikHesap)</span>
+                <span class="deger" data-sayac="@Model.AcikHesap">@TurkceBicim.Sayi(Model.AcikHesap)</span>
                 <span class="ek">@TurkceBicim.Sayi(vadesiz) vadesiz, @TurkceBicim.Sayi(Model.YatirimHesabi) yatırım</span>
             </div>
             <div class="kpi">
-                <span class="etiket">Toplam bakiye</span>
-                <span class="deger">@TurkceBicim.ParaKisa(Model.ToplamBakiye)</span>
-                <span class="ek">@TurkceBicim.Para(Model.ToplamBakiye)</span>
-            </div>
-            <div class="kpi">
                 <span class="etiket">Bugünkü işlemler</span>
-                <span class="deger">@TurkceBicim.Sayi(Model.BugunIslem)</span>
+                <span class="deger" data-sayac="@Model.BugunIslem">@TurkceBicim.Sayi(Model.BugunIslem)</span>
                 <span class="ek">Hacim @TurkceBicim.ParaKisa(Model.BugunHacim)</span>
             </div>
         </div>
     </section>
+
+    @if (Model.SonIslemler.Count > 0)
+    {
+        @* Borsa kayan yazısının operasyon masası karşılığı: son işlemler kayar, üstüne gelince durur.
+           İkinci kopya kesintisiz döngü içindir; ekran okuyucudan ve klavyeden gizlidir. *@
+        <section class="akis-seridi" aria-label="Son işlemlerin akışı">
+            <span class="akis-etiket"><ikon ad="pulse" class="ic-16" />İşlem akışı</span>
+            <div class="akis-pencere">
+                <ul class="akis-liste">
+                    @foreach (var kopya in new[] { false, true })
+                    {
+                        foreach (var i in Model.SonIslemler)
+                        {
+                            <li aria-hidden="@(kopya ? "true" : null)">
+                                <a href="@Url.Action("Dekont", "Islem", new { id = i.Id })" tabindex="@(kopya ? "-1" : null)">
+                                    <span class="saat">@(i.Tarih >= Model.Bugun ? TurkceBicim.Saat(i.Tarih) : TurkceBicim.TarihSaat(i.Tarih))</span>
+                                    <islem-tipi deger="@i.Tip" />
+                                    <span class="hesap">@i.HesapNo</span>
+                                    <tutar deger="@i.IsaretliTutar" isaretli="true" />
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </section>
+    }
 
     <div class="izgara-8-4">
         <div class="izgara">

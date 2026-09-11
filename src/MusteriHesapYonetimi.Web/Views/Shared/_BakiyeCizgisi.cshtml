@@ -3,8 +3,10 @@
 @*
     Basamaklı bakiye çizgisi, sunucuda SVG olarak çizilir (grafik kütüphanesi gerekmez).
     Bakiye yalnız işlem anında değişir: her nokta önce yatay, sonra dikey çizgiyle bağlanır. Taban sıfırdır.
+    Erişilebilir ad ViewData["CizgiEtiketi"] ile verilebilir (varsayılan hesap detayındaki 90 günlük bakiye).
 *@
 @{
+    var etiket = ViewData["CizgiEtiketi"] as string ?? "Son 90 günde bakiye";
     const double Genislik = 300, Yukseklik = 72, Bosluk = 3;
     var bas = Model[0].Zaman;
     var sure = Math.Max(1, (Model[^1].Zaman - bas).TotalSeconds);
@@ -25,7 +27,7 @@
     var enDusuk = Model.Min(n => n.Bakiye);
 }
 <svg class="bakiye-cizgisi" viewBox="0 0 300 72" preserveAspectRatio="none" role="img"
-     aria-label="Son 90 günde bakiye: başlangıç @TurkceBicim.Para(Model[0].Bakiye), bugün @TurkceBicim.Para(Model[^1].Bakiye), en yüksek @TurkceBicim.Para(enYuksek), en düşük @TurkceBicim.Para(enDusuk)">
+     aria-label="@etiket: başlangıç @TurkceBicim.Para(Model[0].Bakiye), bugün @TurkceBicim.Para(Model[^1].Bakiye), en yüksek @TurkceBicim.Para(enYuksek), en düşük @TurkceBicim.Para(enDusuk)">
     <path class="alan" d="@alan" />
     <path class="cizgi" d="@cizgi" vector-effect="non-scaling-stroke" />
 </svg>

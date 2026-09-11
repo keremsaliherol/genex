@@ -4,13 +4,14 @@
 /* Oracle izi kapalıyken (üretim) alt kenarda boşluk ayrılmaz */
 body.iz-yok { --izbar-h: 0px; }
 
-/* Oracle izi: komutlar isteğe göre gruplanır; hata notu kırmızı */
+/* Oracle izi: komutlar isteğe göre gruplanır; hata notu kırmızı. Panel her temada koyu terminal olduğu için
+   renkler tema token'larından değil terminal token'larından. */
 .iz-istek {
-  display: flex; justify-content: space-between; gap: 12px; margin: 4px 2px -4px;
-  font-size: var(--fs-12); font-weight: 500; color: var(--ink-3);
+  display: flex; justify-content: space-between; gap: 12px; margin: 6px 2px -4px;
+  font-size: var(--fs-12); font-weight: 500; color: var(--term-ink-2);
 }
-.iz-istek .mono { color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.iz-not.iz-hata { color: var(--debit); font-family: var(--font-mono); font-size: 12px; }
+.iz-istek .mono { color: var(--term-ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iz-not.iz-hata { color: #FF9F9A; font-family: var(--font-mono); font-size: 12px; }
 
 /* Raporlar: kayıt seçici filtre çubuğunda esner */
 .rapor-secim { flex: 1 1 280px; max-width: 380px; }
@@ -30,6 +31,9 @@ html:not(.js) [data-tablo][hidden] { display: block !important; }
 @media (max-width: 1439.98px) {
   .tablo .genis { display: none; }
 }
+
+/* Yardım metnindeki kısa bağlantılar ("Raporda aç") dar kolonda iki satıra kırılmaz */
+.form-text a { white-space: nowrap; }
 
 /* Sıralama başlığı sunucu tarafında bir bağlantıdır */
 a.sirala { text-decoration: none; color: inherit; }

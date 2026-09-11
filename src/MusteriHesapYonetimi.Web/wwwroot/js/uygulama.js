@@ -266,6 +266,24 @@
   /* İlk hatalı alana odak (sunucu doğrulaması sonrası) */
   $('form .input-validation-error:not([type="hidden"])')?.focus();
 
+  /* Anahtar göstergelerde sayma: yalnız tam sayılar, kısa ve yavaşlayarak; hareket azaltılmışsa hiç.
+     Ekran okuyucu ara değerleri değil son değeri okur (aria-label). */
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    $$('[data-sayac]').forEach((el) => {
+      const hedef = Number(el.dataset.sayac);
+      if (!Number.isFinite(hedef) || hedef <= 0) return;
+      el.setAttribute('aria-label', sayi(hedef));
+      const bas = performance.now(); const sure = 900;
+      const adim = (t) => {
+        const p = Math.min(1, (t - bas) / sure);
+        el.textContent = sayi(p === 1 ? hedef : Math.round(hedef * (1 - Math.pow(2, -10 * p))));
+        if (p < 1) requestAnimationFrame(adim);
+      };
+      el.textContent = sayi(0);
+      requestAnimationFrame(adim);
+    });
+  }
+
   /* Müşteri formu: tip değişince etiket, otomatik müşteri no, telefon biçimi */
   const mf = $('#mf');
   if (mf) {

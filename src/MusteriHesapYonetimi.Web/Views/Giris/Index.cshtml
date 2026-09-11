@@ -11,22 +11,34 @@
     var hatali = ViewData["Hatali"] is true;
     var kilitDakika = (int)KimlikKaydi.KilitSuresi.TotalMinutes;
 
-    // Paneldeki ekstre dokusu dekoratiftir ve kurgusaldır: anonim sayfa veritabanından hiçbir kayıt göstermez,
-    // hesap numaraları maskelidir. Sabit tohumlu üretim her açılışta aynı görüntüyü verir.
+    // Paneldeki akan defter dekoratiftir ve kurgusaldır: anonim sayfa veritabanından hiçbir kayıt göstermez,
+    // hesap numaraları maskelidir. Sabit tohumlu üretim her açılışta aynı görüntüyü verir. Kesintisiz döngü için
+    // satırlar iki kez yazılır; ekran okuyucudan gizlidir.
     var rastgele = new Random(2026);
     string[] tipler = ["YATIRMA", "CEKME", "CEKME", "TRANSFER_GIDEN", "TRANSFER_GELEN", "ALIM", "SATIM"];
     var dakika = 9 * 60;
-    var doku = string.Join("\n", Enumerable.Range(0, 18).Select(_ =>
+    var satirlar = Enumerable.Range(0, 28).Select(_ =>
     {
-        dakika += rastgele.Next(2, 22);
+        dakika += rastgele.Next(2, 18);
         var tip = tipler[rastgele.Next(tipler.Length)];
-        var tutar = rastgele.Next(10_000, 1_500_000) / 100m * (tip is "YATIRMA" or "TRANSFER_GELEN" or "SATIM" ? 1 : -1);
-        return $"{TurkceBicim.Tarih(DateTime.Today)} {dakika / 60:00}:{dakika % 60:00}  1001-••••{rastgele.Next(1000, 9999)}-0{rastgele.Next(1, 4)}  {tip,-15} {TurkceBicim.Para(tutar, true),16}";
-    }));
+        var giris = tip is "YATIRMA" or "TRANSFER_GELEN" or "SATIM";
+        var tutar = rastgele.Next(10_000, 1_500_000) / 100m * (giris ? 1 : -1);
+        var metin = $"{TurkceBicim.Tarih(DateTime.Today)} {dakika / 60 % 24:00}:{dakika % 60:00}  1001-••••{rastgele.Next(1000, 9999)}-0{rastgele.Next(1, 4)}  {tip,-15} {TurkceBicim.Para(tutar, true),16}";
+        return (Metin: metin, Cikis: !giris);
+    }).ToList();
+    var defter = new System.Text.StringBuilder();
+    for (var kopya = 0; kopya < 2; kopya++)
+    {
+        foreach (var (metin, cikis) in satirlar)
+        {
+            var guvenli = System.Net.WebUtility.HtmlEncode(metin);
+            defter.Append(cikis ? $"<span class=\"cikis\">{guvenli}</span>\n" : $"{guvenli}\n");
+        }
+    }
 }
 <div class="giris-sayfa">
     <div class="giris-form">
-        <div class="d-flex align-items-center gap-2"><span class="hm-brand-mark"><ikon ad="vault" /></span><span class="fw-semibold">Hesap Masası</span></div>
+        <div class="d-flex align-items-center gap-2"><span class="hm-brand-mark"><ikon ad="vault" /></span><span class="hm-brand-name" style="color:var(--ink)">Hesap Masası</span></div>
         <form method="post" asp-controller="Giris" asp-action="Index" novalidate data-giris-formu>
             <h1>Oturum açın</h1>
             @if (kilitli)
@@ -70,8 +82,8 @@
         <p class="demo-not m-0">Demo verisi, kurgusal. Gerçek müşteri bilgisi içermez.</p>
     </div>
     <div class="giris-panel">
-        <div class="dokusu" aria-hidden="true">@doku</div>
-        <h2>Müşteri, hesap ve işlem yönetimi.</h2>
+        <div class="dokusu" aria-hidden="true"><pre>@Html.Raw(defter.ToString())</pre></div>
+        <h2>Müşteri, hesap ve işlem <em>tek masada.</em></h2>
         <p>Aracı kurum ve banka operasyonları için örnek uygulama. Veriler Oracle'da, bakiye ve transfer kuralları PL/SQL paketlerinde çalışır.</p>
         <div class="yigin"><span>ASP.NET Core MVC</span><span>Oracle, 19c uyumlu</span><span>PL/SQL</span><span>EF Core + Dapper</span><span>Bootstrap 5.3</span></div>
     </div>

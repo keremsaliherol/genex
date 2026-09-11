@@ -2,6 +2,8 @@
    Renkler tema token'larından okunur; tema değişince grafikler yeniden kurulur (uygulama.js "hm:tema" olayı).
    Kurallar (dataviz): tek eksen, ince işaretler (çubuk en fazla 18px, 4px uç yuvarlama, çizgi 2px), saç teli ızgara,
    hover katmanı varsayılan, metin veri rengini giymez. Her grafiğin tablo karşılığı sayfada vardır.
+   İlk açılışta grafik kısa bir çizimle gelir (verinin nereden büyüdüğünü gösterir); tema değişiminde ve hareket
+   azaltma tercihinde animasyon yoktur.
    prototype/src/charts.js'in karşılığı; tutarlar burada TL (sunucudaki decimal), prototipte kuruş. */
 (function () {
   'use strict';
@@ -10,6 +12,8 @@
   const kok = document.documentElement;
   const css = (ad) => getComputedStyle(kok).getPropertyValue(ad).trim();
   const tl = (x, isaretli) => HM.para(Math.round(x * 100), isaretli);
+  const hareket = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cizim = (ilk) => (ilk && hareket ? { duration: 700, easing: 'easeOutQuart' } : false);
 
   /* TurkceBicim.ParaKisa ile aynı: ₺157,6 mn, ₺48,2 bin */
   const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -45,7 +49,7 @@
   }
   function tooltip(c) {
     return {
-      backgroundColor: c.surface, borderColor: c.line, borderWidth: 1, padding: 10, cornerRadius: 6,
+      backgroundColor: c.surface, borderColor: c.line, borderWidth: 1, padding: 10, cornerRadius: 10,
       titleColor: c.text, titleFont: { weight: '500', size: 12 }, bodyColor: c.ink, bodyFont: { size: 12.5, family: css('--font-mono') },
       footerColor: c.text, footerFont: { weight: '500', size: 12 },
       usePointStyle: true, boxWidth: 14, boxHeight: 2, caretSize: 5
@@ -80,7 +84,7 @@
   };
 
   /* Iraksak çubuk: yatırma yukarı, çekme aşağı; konum kutupluluğu zaten kodlar. veri: [{ gun, giris, cikis }] */
-  function akis(canvas, veri) {
+  function akis(canvas, veri, ilk) {
     const c = temel();
     const gunler = veri.map((g) => ({ tarih: tarih(g.gun), giris: g.giris, cikis: g.cikis }));
     const seri = (label, data, renkDegeri) => ({
@@ -94,6 +98,7 @@
         datasets: [seri('Yatırma', gunler.map((g) => g.giris), c.v1), seri('Çekme', gunler.map((g) => -g.cikis), c.neg)]
       },
       options: {
+        animation: cizim(ilk),
         interaction: { mode: 'index', intersect: false },
         scales: {
           x: { stacked: true, grid: { display: false }, border: { color: c.axis }, ticks: { maxRotation: 0, autoSkipPadding: 16 } },
@@ -119,7 +124,7 @@
   }
 
   /* Basamaklı bakiye çizgisi: bakiye yalnız işlem anında değişir. veri: [{ x: tarih, y: bakiye }] */
-  function bakiye(canvas, veri) {
+  function bakiye(canvas, veri, ilk) {
     const c = temel();
     const son = veri.length - 1;
     return new Chart(canvas, {
@@ -133,6 +138,7 @@
         }]
       },
       options: {
+        animation: cizim(ilk),
         parsing: false,
         interaction: { mode: 'nearest', axis: 'x', intersect: false },
         layout: { padding: { top: 8, right: 8 } },
@@ -159,7 +165,7 @@
   }
 
   /* Yatay çubuk: tek seri (lejant yok, başlık adlandırır), değer çubuk ucunda. veri: [{ etiket, deger }] */
-  function yatay(canvas, veri) {
+  function yatay(canvas, veri, ilk) {
     const c = temel();
     return new Chart(canvas, {
       type: 'bar',
@@ -171,6 +177,7 @@
         }]
       },
       options: {
+        animation: cizim(ilk),
         indexAxis: 'y',
         layout: { padding: { right: 8 } },
         scales: {
@@ -194,9 +201,9 @@
     if (!kurucu) return;
     let veri;
     try { veri = JSON.parse(canvas.dataset.veri || '[]'); } catch (_) { return; }
-    const g = { kur: () => kurucu(canvas, veri) };
-    g.chart = g.kur();
+    const g = { kur: (ilk) => kurucu(canvas, veri, ilk) };
+    g.chart = g.kur(true);
     grafikler.push(g);
   });
-  document.addEventListener('hm:tema', () => grafikler.forEach((g) => { g.chart.destroy(); g.chart = g.kur(); }));
+  document.addEventListener('hm:tema', () => grafikler.forEach((g) => { g.chart.destroy(); g.chart = g.kur(false); }));
 })();

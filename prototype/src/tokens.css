@@ -1,105 +1,156 @@
-/* Hesap Masası tema katmanı
+/* Hesap Masası tema katmanı ("Masa" yönü, Faz 6)
+   Renk dili Genex Yazılım'ın kendi token'larından türetildi: gece laciverti #1A1A2E gövde, kızıl #A52A27 kimlik.
+   Kızıl yalnız kimlik öğelerinde (marka işareti, aktif gösterge) ve çıkış tutarlarında; eylemler lacivert.
    Katmanlar: primitive (ham değer) → semantic (görev adı) → component (Bootstrap 5.3 eşlemesi).
    Açık tema bare :root'ta; koyu tema hem prefers-color-scheme hem data-theme ile. */
 
 /* 1) Primitive */
 :root {
-  --p-ink-950: #141A26;
-  --p-ink-700: #525C70;
-  --p-ink-500: #6B7489;
-  --p-ink-300: #CDD3DD;
-  --p-ink-200: #E2E6ED;
-  --p-ink-100: #F3F5F8;
-  --p-ink-50: #F7F8FA;
-  --p-ink-25: #FCFCFD;
+  /* Açık nötrler: Genex'in laciverti yönünde (ton 240°) */
+  --p-slate-950: #1A1A2E;
+  --p-slate-800: #2D2D44;
+  --p-slate-700: #4B4B63;
+  --p-slate-500: #6B6B82;
+  --p-slate-300: #CCCCDA;
+  --p-slate-200: #E3E3EC;
+  --p-slate-100: #F3F3F7;
+  --p-slate-50: #F6F6FA;
+  --p-slate-25: #FCFCFE;
 
-  --p-night-950: #0E121A;
-  --p-night-900: #151B25;
-  --p-night-850: #1B2230;
-  --p-night-700: #273142;
-  --p-night-600: #334058;
-  --p-night-400: #8791A5;
-  --p-night-300: #A6B0C2;
-  --p-night-100: #E6EAF1;
+  /* Koyu nötrler: Genex kahraman degradesi #0F0F1A → #2D2D44 */
+  --p-night-1000: #0B0B14;
+  --p-night-950: #0F0F1A;
+  --p-night-900: #151524;
+  --p-night-850: #1B1B2E;
+  --p-night-800: #202036;
+  --p-night-700: #2A2A40;
+  --p-night-600: #37374F;
+  --p-night-400: #8A8AA3;
+  --p-night-300: #A9A9C0;
+  --p-night-100: #ECECF4;
 
-  --p-cobalt-900: #1C2748;
-  --p-cobalt-700: #1C38A3;
-  --p-cobalt-600: #2446C8;
-  --p-cobalt-400: #5B78E6;
-  --p-cobalt-300: #7D96F2;
-  --p-cobalt-200: #9DB0F5;
-  --p-cobalt-50: #E9EEFC;
+  /* Lacivert-çivit: bağlantı, odak, seçili durum */
+  --p-indigo-900: #22234A;
+  --p-indigo-700: #262A80;
+  --p-indigo-600: #343A99;
+  --p-indigo-500: #4A50B8;
+  --p-indigo-400: #6C74E0;
+  --p-indigo-300: #A3A8F0;
+  --p-indigo-200: #C1C4F6;
+  --p-indigo-50: #ECEDF8;
+
+  /* Genex kızılı: #7B1D1A primary, #A52A27 primary-light, #C73E3A, #E63946 accent */
+  --p-crimson-950: #2E1414;
+  --p-crimson-800: #5C0F0C;
+  --p-crimson-700: #7B1D1A;
+  --p-crimson-600: #A52A27;
+  --p-crimson-500: #C73E3A;
+  --p-crimson-450: #E63946;
+  --p-crimson-400: #E0544F;
+  --p-crimson-300: #F0827D;
+  --p-crimson-50: #FBECEB;
 
   --p-green-950: #12291F;
   --p-green-700: #17744A;
   --p-green-300: #55C592;
   --p-green-50: #E7F4ED;
 
-  --p-red-950: #3A1A18;
-  --p-red-700: #B42318;
-  --p-red-400: #E66767;
-  --p-red-300: #F28B82;
-  --p-red-50: #FCEBE9;
-
   --p-amber-950: #33270F;
   --p-amber-700: #935A00;
+  --p-amber-600: #C27C0E;
+  --p-amber-550: #B57A1C;
   --p-amber-300: #E8B45A;
   --p-amber-50: #FDF3DB;
-
-  --p-orange-600: #D95926;
-  --p-orange-500: #EB6834;
 }
 
 /* 2) Semantic: açık tema (varsayılan, damgasız belge) */
 :root {
   color-scheme: light;
-  --canvas: var(--p-ink-100);
-  --surface: var(--p-ink-25);
-  --surface-2: var(--p-ink-50);
-  --line: var(--p-ink-200);
-  --line-strong: var(--p-ink-300);
-  --ink: var(--p-ink-950);
-  --ink-2: var(--p-ink-700);
-  --ink-3: var(--p-ink-500);
+  --canvas: var(--p-slate-100);
+  --surface: var(--p-slate-25);
+  --surface-2: var(--p-slate-50);
+  --line: var(--p-slate-200);
+  --line-strong: var(--p-slate-300);
+  --ink: var(--p-slate-950);
+  --ink-2: var(--p-slate-700);
+  --ink-3: var(--p-slate-500);
 
-  --accent: var(--p-cobalt-600);
-  --accent-rgb: 36, 70, 200;
-  --accent-hover: var(--p-cobalt-700);
-  --accent-soft: var(--p-cobalt-50);
-  --on-accent: #FDFDFE;
+  /* Etkileşim vurgusu (bağlantı, odak, seçili) */
+  --accent: var(--p-indigo-600);
+  --accent-rgb: 52, 58, 153;
+  --accent-hover: var(--p-indigo-700);
+  --accent-soft: var(--p-indigo-50);
+  --on-accent: var(--p-slate-25);
+
+  /* Birincil eylem: Genex laciverti dolgu */
+  --action: var(--p-slate-950);
+  --action-hover: var(--p-slate-800);
+  --on-action: var(--p-slate-25);
+
+  /* Marka kimliği: Genex kızılı (yalnız kimlik öğeleri) */
+  --brand: var(--p-crimson-600);
+  --brand-deep: var(--p-crimson-700);
+  --brand-gradient: linear-gradient(135deg, #7B1D1A 0%, #A52A27 55%, #C73E3A 100%);
 
   --credit: var(--p-green-700);
   --credit-soft: var(--p-green-50);
-  --debit: var(--p-red-700);
-  --debit-soft: var(--p-red-50);
+  --debit: var(--p-crimson-600);
+  --debit-soft: var(--p-crimson-50);
   --warn: var(--p-amber-700);
   --warn-soft: var(--p-amber-50);
 
-  --focus-ring: rgba(36, 70, 200, 0.28);
-  --shadow-pop: 0 10px 28px rgba(20, 26, 38, 0.10), 0 1px 2px rgba(20, 26, 38, 0.06);
-  --shadow-drawer: 0 -10px 28px rgba(20, 26, 38, 0.08);
-  --scrim: rgba(14, 18, 26, 0.48);
-  --skeleton: #E9ECF1;
-  --skeleton-hi: #F4F6F9;
+  --focus-ring: rgba(52, 58, 153, 0.28);
+  /* Gölgeler lacivert tonlu, tek ışık kaynağı (üstten) */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 46, 0.06);
+  --shadow-panel: 0 1px 2px rgba(26, 26, 46, 0.04), 0 12px 32px -18px rgba(26, 26, 46, 0.18);
+  --shadow-lift: 0 2px 4px rgba(26, 26, 46, 0.06), 0 18px 40px -20px rgba(26, 26, 46, 0.28);
+  --shadow-pop: 0 18px 44px -14px rgba(26, 26, 46, 0.30), 0 2px 6px rgba(26, 26, 46, 0.08);
+  --shadow-drawer: 0 -14px 36px rgba(15, 15, 26, 0.28);
+  --scrim: rgba(15, 15, 26, 0.52);
+  --skeleton: #E8E8F0;
+  --skeleton-hi: #F3F3F8;
+  --glow: rgba(52, 58, 153, 0.07);
 
-  /* Grafik (dataviz doğrulayıcısından geçti, zemin #FCFCFD) */
-  --viz-1: var(--p-cobalt-600);
-  --viz-1-wash: rgba(36, 70, 200, 0.10);
-  --viz-neg: var(--p-red-700);
-  --viz-2: var(--p-orange-500);
-  --viz-grid: var(--p-ink-200);
-  --viz-axis: var(--p-ink-300);
-  --viz-text: var(--p-ink-700);
+  /* Grafik (dataviz doğrulayıcısından geçti, zemin #FCFCFE) */
+  --viz-1: var(--p-indigo-500);
+  --viz-1-wash: rgba(74, 80, 184, 0.12);
+  --viz-neg: var(--p-crimson-600);
+  --viz-2: var(--p-amber-600);
+  --viz-grid: var(--p-slate-200);
+  --viz-axis: var(--p-slate-300);
+  --viz-text: var(--p-slate-700);
 
-  /* SQL renklendirme */
-  --code-kw: var(--p-cobalt-600);
+  /* SQL renklendirme (tema içindeki kod blokları; Oracle izi kendi terminal renklerini kullanır) */
+  --code-kw: var(--p-indigo-600);
   --code-str: var(--p-green-700);
   --code-bind: var(--p-amber-700);
-  --code-cmt: var(--p-ink-500);
+  --code-cmt: var(--p-slate-500);
 
-  /* Tipografi */
+  /* Kenar menü ve terminal: her iki temada koyu (yapısal öğe, bölüm değil) */
+  --rail-bg: linear-gradient(180deg, #1A1A2E 0%, #141424 60%, #10101C 100%);
+  --rail-ink: #B8B8CC;
+  --rail-ink-2: #8484A0;
+  --rail-line: rgba(236, 236, 244, 0.08);
+  --rail-hover: rgba(236, 236, 244, 0.05);
+  --rail-active: rgba(236, 236, 244, 0.09);
+  --rail-active-ink: #F7F7FB;
+  --term-bg: #0B0B14;
+  --term-surface: #131320;
+  --term-surface-2: #1A1A2B;
+  --term-line: #262639;
+  --term-ink: #DCDCE8;
+  --term-ink-2: #9696B0;
+  --term-kw: #A3A8F0;
+  --term-str: #7FD3A8;
+  --term-bind: #E8B45A;
+  --term-cmt: #6E6E8C;
+
+  /* Tipografi: Geist arayüz, Geist Mono veri, Mona Sans başlık ve büyük rakam (genişlik ekseniyle) */
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-display: "Mona Sans", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --stretch-wide: 112%;
+  --stretch-narrow: 84%;
   --fs-12: 0.75rem;
   --fs-13: 0.8125rem;
   --fs-14: 0.875rem;
@@ -107,23 +158,28 @@
   --fs-20: 1.25rem;
   --fs-24: 1.5rem;
   --fs-30: 1.875rem;
+  --fs-40: 2.5rem;
+  --fs-52: 3.25rem;
 
-  /* Şekil kilidi: kontrol 6, panel 10, rozet 4 */
-  --r-control: 6px;
-  --r-panel: 10px;
-  --r-badge: 4px;
+  /* Şekil kilidi: kontrol 8, panel 14, rozet 5 (pill yok) */
+  --r-control: 8px;
+  --r-panel: 14px;
+  --r-badge: 5px;
 
   /* Yerleşim */
-  --sidebar-w: 232px;
-  --topbar-h: 56px;
-  --izbar-h: 36px;
-  --iz-govde-h: 340px;
-  --gutter: 24px;
+  --sidebar-w: 248px;
+  --topbar-h: 60px;
+  --izbar-h: 38px;
+  --iz-govde-h: 360px;
+  --gutter: 28px;
+  --content-max: 1520px;
 
-  /* Hareket */
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Hareket: çıkış eğrisi, küçük esnek eğri yalnız basma geri bildiriminde */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --dur-1: 160ms;
-  --dur-2: 220ms;
+  --dur-2: 240ms;
+  --dur-3: 520ms;
 }
 
 /* Koyu tema: işletim sistemi tercihi (açık damgası yoksa) */
@@ -138,34 +194,44 @@
     --ink: var(--p-night-100);
     --ink-2: var(--p-night-300);
     --ink-3: var(--p-night-400);
-    --accent: var(--p-cobalt-300);
-    --accent-rgb: 125, 150, 242;
-    --accent-hover: var(--p-cobalt-200);
-    --accent-soft: var(--p-cobalt-900);
+    --accent: var(--p-indigo-300);
+    --accent-rgb: 163, 168, 240;
+    --accent-hover: var(--p-indigo-200);
+    --accent-soft: var(--p-indigo-900);
     --on-accent: var(--p-night-950);
+    --action: var(--p-night-100);
+    --action-hover: #F7F7FB;
+    --on-action: var(--p-night-950);
+    --brand: var(--p-crimson-450);
+    --brand-deep: var(--p-crimson-500);
     --credit: var(--p-green-300);
     --credit-soft: var(--p-green-950);
-    --debit: var(--p-red-300);
-    --debit-soft: var(--p-red-950);
+    --debit: var(--p-crimson-300);
+    --debit-soft: var(--p-crimson-950);
     --warn: var(--p-amber-300);
     --warn-soft: var(--p-amber-950);
-    --focus-ring: rgba(125, 150, 242, 0.35);
-    --shadow-pop: 0 10px 28px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-drawer: 0 -10px 28px rgba(0, 0, 0, 0.35);
-    --scrim: rgba(5, 8, 12, 0.6);
-    --skeleton: #1F2735;
-    --skeleton-hi: #263042;
-    --viz-1: var(--p-cobalt-400);
-    --viz-1-wash: rgba(91, 120, 230, 0.14);
-    --viz-neg: var(--p-red-400);
-    --viz-2: var(--p-orange-600);
+    --focus-ring: rgba(163, 168, 240, 0.35);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px -18px rgba(0, 0, 0, 0.6);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.75);
+    --shadow-pop: 0 18px 44px -14px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-drawer: 0 -14px 36px rgba(0, 0, 0, 0.5);
+    --scrim: rgba(5, 5, 10, 0.62);
+    --skeleton: #1E1E30;
+    --skeleton-hi: #26263A;
+    --glow: rgba(108, 116, 224, 0.10);
+    --viz-1: var(--p-indigo-400);
+    --viz-1-wash: rgba(108, 116, 224, 0.16);
+    --viz-neg: var(--p-crimson-400);
+    --viz-2: var(--p-amber-550);
     --viz-grid: var(--p-night-700);
     --viz-axis: var(--p-night-600);
     --viz-text: var(--p-night-300);
-    --code-kw: var(--p-cobalt-200);
+    --code-kw: var(--p-indigo-300);
     --code-str: var(--p-green-300);
     --code-bind: var(--p-amber-300);
     --code-cmt: var(--p-night-400);
+    --rail-bg: linear-gradient(180deg, #16162A 0%, #111120 60%, #0D0D18 100%);
   }
 }
 
@@ -180,34 +246,44 @@
   --ink: var(--p-night-100);
   --ink-2: var(--p-night-300);
   --ink-3: var(--p-night-400);
-  --accent: var(--p-cobalt-300);
-  --accent-rgb: 125, 150, 242;
-  --accent-hover: var(--p-cobalt-200);
-  --accent-soft: var(--p-cobalt-900);
+  --accent: var(--p-indigo-300);
+  --accent-rgb: 163, 168, 240;
+  --accent-hover: var(--p-indigo-200);
+  --accent-soft: var(--p-indigo-900);
   --on-accent: var(--p-night-950);
+  --action: var(--p-night-100);
+  --action-hover: #F7F7FB;
+  --on-action: var(--p-night-950);
+  --brand: var(--p-crimson-450);
+  --brand-deep: var(--p-crimson-500);
   --credit: var(--p-green-300);
   --credit-soft: var(--p-green-950);
-  --debit: var(--p-red-300);
-  --debit-soft: var(--p-red-950);
+  --debit: var(--p-crimson-300);
+  --debit-soft: var(--p-crimson-950);
   --warn: var(--p-amber-300);
   --warn-soft: var(--p-amber-950);
-  --focus-ring: rgba(125, 150, 242, 0.35);
-  --shadow-pop: 0 10px 28px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-drawer: 0 -10px 28px rgba(0, 0, 0, 0.35);
-  --scrim: rgba(5, 8, 12, 0.6);
-  --skeleton: #1F2735;
-  --skeleton-hi: #263042;
-  --viz-1: var(--p-cobalt-400);
-  --viz-1-wash: rgba(91, 120, 230, 0.14);
-  --viz-neg: var(--p-red-400);
-  --viz-2: var(--p-orange-600);
+  --focus-ring: rgba(163, 168, 240, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px -18px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.75);
+  --shadow-pop: 0 18px 44px -14px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-drawer: 0 -14px 36px rgba(0, 0, 0, 0.5);
+  --scrim: rgba(5, 5, 10, 0.62);
+  --skeleton: #1E1E30;
+  --skeleton-hi: #26263A;
+  --glow: rgba(108, 116, 224, 0.10);
+  --viz-1: var(--p-indigo-400);
+  --viz-1-wash: rgba(108, 116, 224, 0.16);
+  --viz-neg: var(--p-crimson-400);
+  --viz-2: var(--p-amber-550);
   --viz-grid: var(--p-night-700);
   --viz-axis: var(--p-night-600);
   --viz-text: var(--p-night-300);
-  --code-kw: var(--p-cobalt-200);
+  --code-kw: var(--p-indigo-300);
   --code-str: var(--p-green-300);
   --code-bind: var(--p-amber-300);
   --code-cmt: var(--p-night-400);
+  --rail-bg: linear-gradient(180deg, #16162A 0%, #111120 60%, #0D0D18 100%);
 }
 
 /* 3) Component: Bootstrap 5.3 değişken eşlemesi.

@@ -1,70 +1,105 @@
-# Design System: Hesap Masası
+# Design System: Hesap Masası ("Masa" yönü)
 
-Müşteri, hesap ve işlem yönetimi için iç operasyon konsolu (ASP.NET Core MVC + Oracle). Bu dosya prototipin (`prototype/`) ve sonraki fazda `wwwroot/css/theme.css`'in tek doğruluk kaynağıdır.
+Müşteri, hesap ve işlem yönetimi için iç operasyon konsolu (ASP.NET Core MVC + Oracle). Bu dosya `prototype/src/`
+katmanlarının (tokens, shell, components) ve onlardan üretilen `wwwroot/css/theme.css`'in tek doğruluk kaynağıdır.
+Faz 6'da (görsel yenileme) "Kurumsal güven / kobalt" yönünün yerini aldı.
 
 ## 1. Visual Theme & Atmosphere
-Sakin, kesin ve güven veren bir back-office arayüzü. Bir aracı kurumun operasyon masası: veri yoğun ama gürültüsüz, her rakam hizalı, her durum bir bakışta okunur. Yoğunluk "Daily App Balanced" ile "Cockpit Dense" arası (7/10), varyans "Predictable Symmetric" (3/10), hareket "Static Restrained" (3/10). Kartlar yalnız hiyerarşi gerektiğinde; gruplar 1px çizgilerle ayrılır. Tek imza öğesi: ekranın veritabanında ne çalıştırdığını gösteren **Oracle izi** paneli.
+Bir aracı kurumun operasyon masası: veri yoğun, kesin, gürültüsüz; ama sıradan bir yönetim paneli gibi değil, işlem
+salonunun ciddiyetini taşıyan. Renk dili Genex Yazılım'ın kendi tasarım token'larından türetildi (sitelerinin CSS'i:
+`--secondary: #1a1a2e`, `--primary: #7b1d1a`, `--primary-light: #a52a27`, `--accent: #e63946`, kahraman degradesi
+`#0f0f1a → #1a1a2e → #2d2d44`). Firma adı ve logosu kullanılmaz; yalnız görsel dil yansıtılır.
 
-Temel: Bootstrap 5.3 (resmi paket) + bu dosyadaki token katmanı. Bootstrap'in CSS değişkenleri (`--bs-*`) token'lara bağlanır; bileşenler varsayılan Bootstrap görünümüyle bırakılmaz.
+Okuma: Genex mülakatı için sermaye piyasası arka ofis konsolu, "işlem salonu hassasiyeti" dili. Yoğunluk 7/10,
+varyans 5/10 (ürün arayüzü), hareket 5/10 (anlamlı ve kısa; hareket azaltmada kapalı).
+
+**İmza öğeleri** (her biri bir şey anlatır):
+- **Lacivert kenar menü** her iki temada Genex gece lacivertinde; aktif sayfa sol kenarda kızıl çizgiyle. Yapısal öğedir,
+  sayfa ortasında tema değiştiren bölüm değildir.
+- **Genişlik ekseni:** Mona Sans başlıklarda geniş (%112), büyük rakamlarda dar (%84) kesilir; rakamlar borsa panosu gibi okunur.
+- **İşlem akışı şeridi** (genel bakış): gerçek son işlemler BIST kayan yazısı gibi yavaşça akar; üstüne gelince durur.
+- **Oracle izi** her temada koyu bir terminaldir; üst kenarında Genex kızılı ince çizgi.
+- **Giriş ekranı:** Genex kahraman degradesi üstünde, maskeli ve yukarı akan kurgusal bir defter.
+
+Temel: Bootstrap 5.3 (resmi paket) + bu dosyadaki token katmanı. `--bs-*` değişkenleri token'lara bağlanır.
 
 ## 2. Color Palette & Roles
-Nötrler hafif mavi eğilimlidir (kobalt vurguyla akraba). Tek vurgu rengi vardır; giriş/çıkış/uyarı renkleri semantiktir ve vurgu sayılmaz.
+Nötrler Genex lacivertinin tonunda (240°). Rol ayrımı kesindir: **eylem lacivert, etkileşim vurgusu çivit, kimlik kızıl.**
+Kızıl butonlarda ve verinin kendisinde kullanılmaz; yalnız kimlik öğelerinde (marka işareti, aktif gösterge, ışık) ve
+çıkış tutarlarında (her zaman işaret ve ikonla).
 
 | Rol | Açık | Koyu | Görev |
 |---|---|---|---|
-| Canvas Mist | `#F3F5F8` | `#0E121A` | Sayfa zemini |
-| Ledger Surface | `#FCFCFD` | `#151B25` | Panel, tablo, form yüzeyi |
-| Row Wash | `#F7F8FA` | `#1B2230` | Tablo başlığı, hover, kod bloğu |
-| Hairline | `#E2E6ED` | `#273142` | 1px yapısal çizgiler |
-| Ink | `#141A26` | `#E6EAF1` | Ana metin |
-| Ink Secondary | `#525C70` | `#A6B0C2` | İkincil metin, etiket |
-| Ink Muted | `#6B7489` | `#8791A5` | Yer tutucu, meta (yalnız yüzey üzerinde) |
-| **Cobalt** (tek vurgu) | `#2446C8` | `#7D96F2` | Birincil eylem, bağlantı, odak halkası, aktif menü |
-| Cobalt Wash | `#E9EEFC` | `#1C2748` | Aktif menü zemini, seçili satır |
-| Credit | `#17744A` / zemin `#E7F4ED` | `#55C592` / `#12291F` | Giriş (+) tutarları, "Aktif" |
-| Debit | `#B42318` / zemin `#FCEBE9` | `#F28B82` / `#3A1A18` | Çıkış (-) tutarları, hata |
-| Warn | `#935A00` / zemin `#FDF3DB` | `#E8B45A` / `#33270F` | Uyarı |
+| Canvas | `#F3F3F7` | `#0F0F1A` | Sayfa zemini |
+| Surface | `#FCFCFE` | `#151524` | Panel, tablo, form yüzeyi |
+| Surface 2 | `#F6F6FA` | `#1B1B2E` | Tablo başlığı, iç zemin |
+| Line / Line strong | `#E3E3EC` / `#CCCCDA` | `#2A2A40` / `#37374F` | Yapısal çizgiler |
+| Ink / 2 / 3 | `#1A1A2E` / `#4B4B63` / `#6B6B82` | `#ECECF4` / `#A9A9C0` / `#8A8AA3` | Metin (en düşük kontrast 4,68:1) |
+| **Action** | `#1A1A2E` (hover `#2D2D44`) | `#ECECF4` | Birincil buton dolgusu |
+| **Accent** (çivit) | `#343A99` | `#A3A8F0` | Bağlantı, odak halkası, seçili satır |
+| **Brand** (Genex kızılı) | `#A52A27`, degrade `#7B1D1A → #A52A27 → #C73E3A` | `#E63946` | Marka işareti, aktif gösterge |
+| Credit | `#17744A` | `#55C592` | Giriş (+) tutarları, "Aktif" |
+| Debit | `#A52A27` | `#F0827D` | Çıkış (−) tutarları, hata |
+| Warn | `#935A00` | `#E8B45A` | Uyarı |
 
-**Grafik renkleri** (dataviz doğrulayıcısından geçti; açık zemin `#FCFCFD`, koyu zemin `#151B25`):
-- Seri 1 / giriş: `#2446C8` açık, `#5B78E6` koyu.
-- Çıkış (ıraksak kutup): `#B42318` açık, `#e66767` koyu. Mavi-kırmızı çifti CVD ΔE 27,5 (açık) / 20,4 (koyu).
-- Seri 2: `#eb6834` açık, `#d95926` koyu.
-- Yeşil-kırmızı çifti grafiklerde kullanılmaz: koyu temada deuteranopi ΔE 3,4 ile başarısız. Tablolarda yeşil/kırmızı tutarlar her zaman +/- işaretiyle birlikte gelir.
+**Menü ve terminal** (iki temada aynı): menü `#1A1A2E → #10101C` degrade, metin `#B8B8CC` (8,7:1), soluk `#8484A0`
+(4,7:1); terminal zemini `#0B0B14`, kod renkleri anahtar kelime `#A3A8F0`, metin `#7FD3A8`, bind `#E8B45A`.
+
+**Grafik renkleri** (dataviz doğrulayıcısından geçti; açık zemin `#FCFCFE`, koyu `#151524`):
+- Giriş / seri 1: `#4A50B8` açık, `#6C74E0` koyu. Çıkış (ıraksak kutup): `#A52A27` açık, `#E0544F` koyu.
+- Seri 2 (hesap dağılımı): `#C27C0E` açık, `#B57A1C` koyu.
+- Çiftler grafik başına doğrulandı (nakit akışı: seri 1 + çıkış; dağılım: seri 1 + seri 2).
 
 ## 3. Typography Rules
-- **Sans:** Geist 400/500/600 (arayüz ve başlıklar). Dashboard olduğu için serif yok.
-- **Mono:** Geist Mono 400/500 (tutarlar, müşteri/hesap no, SQL, zaman damgası). Tablo sütunlarında `tabular-nums`; büyük tekil rakamlarda orantılı rakam.
-- **Ölçek:** 12 / 13 / 14 / 16 / 20 / 24 / 30 px. Gövde 14, tablo 13, sayfa başlığı 24/600, panel başlığı 14/600, etiket 13/500.
-- **Kurallar:** Cümle düzeni ("Yeni müşteri"), başlıklarda `text-wrap: balance`, metin satırı en fazla 65 karakter, küçük büyük harf etiketlerde +0.04em aralık. Inter yok. Türkçe karakterler latin-ext alt kümesiyle gelir; üretimde font self-host edilir.
+- **Arayüz:** Geist 400/500/550/600. **Veri:** Geist Mono 400/500 (tutar, hesap no, SQL, zaman); tablo sütunlarında
+  `tabular-nums`. **Başlık ve büyük rakam:** Mona Sans (ağırlık 200-900, genişlik %75-125).
+- Genişlik ekseni anlam taşır: sayfa başlığı, marka adı, boş durum ve modal başlığı **geniş** (`--stretch-wide: 112%`);
+  kahraman rakamı, KPI, bakiye ve dekont tutarı **dar** (`--stretch-narrow: 84%`, orantılı rakam).
+- Ölçek: 12 / 13 / 14 / 16 / 20 / 24 / 30 / 40 / 52. Gövde 14, tablo 13, sayfa başlığı akışkan 26-34/650, panel başlığı 15/600.
+- Cümle düzeni, başlıkta `text-wrap: balance`, paragrafta `pretty`, satır en fazla 65 karakter. Vurgu aynı ailede renkle
+  ya da kalınlıkla (giriş başlığında kızıl "tek masada"). Serif ve Inter yok.
+- Fontlar yerelde (Fontsource, OFL-1.1; latin + latin-ext), `tools/on-yuz-varliklari.mjs` kopyalar; ana metin fontu önyüklenir.
 
 ## 4. Component Stylings
-- **Butonlar:** Kontrol yarıçapı 6px. Birincil: Cobalt dolgu, beyaz metin; ikincil: yüzey + Hairline çerçeve; üçüncül: metin bağlantısı. Basışta `scale(.98)`. Parlama, gölge yok. Her ekranda tek birincil eylem.
-- **Paneller:** 10px yarıçap, 1px Hairline, gölgesiz. Gölge yalnız dropdown, modal ve Oracle izi paneline, mürekkep tonlu (`rgba(20,26,38,.10)`).
-- **Rozetler:** 4px yarıçap, 12px/500, soluk zemin + koyu metin, gerekiyorsa ikon. Pill yok. Renk yalnız anlam taşıyorsa (Aktif/Pasif, hata); işlem tipi rozetleri nötrdür, tutarın rengi bakiye etkisini anlatır.
-- **Tablolar:** Satır 40px, hücre 8×12px, yalnız alt çizgi, hover Row Wash, yapışkan başlık, sayılar sağa hizalı mono. Sıralanabilir başlıklar `aria-sort` taşır.
-- **Formlar:** Etiket üstte, zorunlu işareti, yardım metni altta, hata metni altta (Debit). Blur'da doğrulama; gönderimde hata özeti + ilk hatalı alana odak. Yer tutucu etiket yerine geçmez.
-- **Durumlar:** Yükleniyor = sayfa şeklinde iskelet (döner çember yok); Boş = ne olduğunu ve nasıl doldurulacağını söyleyen kompozisyon + tek eylem; Hata = neden + çözüm + katlanır teknik detay (ORA kodu, istek kimliği).
-- **İkonlar:** Phosphor Regular, 20px (tabloda 16px), tek aile, SVG sprite. Emoji yok.
-- **Oracle izi:** Ana kolonun altına yapışık 36px durum çubuğu; tıklanınca 340px panel. Girdi: katman çipi (EF Core, Dapper, Paket, Trigger, View), renklendirilmiş SQL, bind tablosu, etkilenen satır, temsili süre.
+- **Şekil kilidi:** kontrol 8px, panel 14px, rozet 5px; açılır menü ve seçici 12px, modal 16px. Pill yok.
+- **Butonlar:** birincil lacivert dolgu, üstte 1px iç ışık; üzerine gelince 1px yükselir ve gölgesi büyür; basışta
+  `scale(.97)` kısa esnemeyle döner. İkincil: yüzey + çizgi + küçük gölge. Her ekranda tek birincil eylem.
+- **Paneller:** yüzey + 1px çizgi + lacivert tonlu yumuşak gölge (`--shadow-panel`, tek ışık kaynağı üstte).
+- **Kahraman (genel bakış):** asimetrik iki kolon; solda tek ana rakam (toplam bakiye, 40-52px dar kesim) ve 30 günlük
+  birikimli net akış çizgisi, sağda üç ikincil gösterge. Köşelerde çok hafif çivit ve kızıl ışık.
+- **Tablolar:** satır 44px, başlık soluk; tıklanabilir satırın üzerindeyken sol kenarda 3px çivit çizgi.
+- **Rozetler:** işlem tipi nötr; renk yalnız anlam taşıyorsa (Aktif, uyarı, hata). Kurumsal müşteri baş harfi lacivert dolgu.
+- **Formlar:** etiket üstte, 38px yükseklik, üzerine gelince çizgi koyulaşır, odakta 4px çivit halka.
+- **Durumlar:** iskelet (döner çember yok), boş durum (başlık Mona Sans geniş), hata (neden + çözüm + teknik detay).
+- **İkonlar:** Phosphor Regular, SVG sprite. Emoji yok.
 
 ## 5. Layout Principles
-- Kabuk: 232px sidebar + ana kolon. 1024-1279px'de 64px ikon rayı, 768px altında offcanvas. İçerik kenar boşluğu 24px, en fazla 1600px.
-- Üst çubuk 56px: breadcrumb, genel arama (Ctrl+K), Oracle izi, kullanıcı menüsü.
-- Özet önce, detay sonra: KPI şeridi (çizgiyle ayrılmış tek satır), sonra grafik ve tablo. Üç eş kart dizisi yok.
-- Filtreler kapsadıkları içeriğin üstünde tek satırda; URL sorgusuna yazılır.
-- Geniş tablolar kendi kabında yatay kayar; sayfa gövdesi yatay kaymaz.
+- Kabuk: 248px lacivert menü + ana kolon (içerik en fazla 1520px). 1024-1279px'de 72px ikon rayı, 768px altında offcanvas.
+- Üst çubuk 60px, cam (arka plan bulanıklığı; destek yoksa ya da şeffaflık azaltılmışsa düz zemin).
+- Özet önce: kahraman ya da KPI şeridi, sonra işlem akışı, sonra grafik ve tablolar. Üç eş kart dizisi yok.
+- Filtreler kapsadıkları içeriğin üstünde tek satırda; URL sorgusuna yazılır. Geniş tablolar kendi kabında kayar.
 
 ## 6. Motion & Interaction
-- Hover/press 150-200ms ease-out, panel/offcanvas 220ms. Otomatik veya dekoratif animasyon yok.
-- Sayfa geçişlerinde yapay bekleme yok; iskelet yalnız gerçekten yükleniyorsa.
-- Grafiklerde hover katmanı varsayılan: çizgide crosshair + tooltip, çubukta işaret başına tooltip; her grafikte "Tablo olarak göster".
-- `prefers-reduced-motion`'da tüm geçişler kapanır. Görünür klavye odağı (2px Cobalt halka + 2px boşluk).
+- Her animasyonun bir görevi var: **sayfa girişi** blokları okuma sırasıyla 50ms arayla yukarı doğru getirir (520ms);
+  **sayma** anahtar tam sayı göstergelerine dikkati çeker (900ms, ekran okuyucu son değeri okur); **grafik çizimi**
+  verinin nereden büyüdüğünü gösterir (700ms, yalnız ilk açılışta); **işlem akışı** masanın canlı akışını anlatır
+  (70s döngü, üstüne gelince ya da odakta durur); **giriş defteri** konunun kendi malzemesidir (48s döngü).
+- Hover/press 160-240ms, çıkış eğrisi `cubic-bezier(.16,1,.3,1)`; basışta küçük esnek eğri.
+- `prefers-reduced-motion: reduce`'da hepsi kapanır (şerit yatay kaydırılabilir listeye döner). Sayfada tek kayan şerit.
+- Görünür klavye odağı (2px çivit halka + 2px boşluk).
 
 ## 7. Anti-Patterns (Banned)
-- Emoji, Inter, serif, saf siyah `#000000`, saf beyaz zemin, mor/mavi AI gradyanı, neon parlama.
-- Her bloğa aynı yarıçap + gölge; kartlara renkli kenar şeridi; üç eş kart satırı.
-- Em-dash ve en-dash (tarih/sayı aralıkları kısa çizgiyle yazılır).
-- Klişe adlar (Ahmet Yılmaz, Acme), sahte-kesin sayılar (tüm veriler "Demo verisi, kurgusal" etiketli ve veriden hesaplanır).
-- Yalnız renkle anlam: giriş/çıkış her zaman işaret ve ikonla, durumlar etiketle.
-- Grafikte çift eksen, her noktaya sayı, kesikli ızgara, mark etrafına çerçeve.
+- Emoji, Inter, serif, saf siyah ve saf beyaz, mor/mavi AI degradesi, neon parlama, özel imleç.
+- Kızılı eylem ya da veri rengi olarak kullanmak (çıkış tutarı hariç, o da işaret ve ikonla).
+- Her bloğa aynı gölge; kartlara renkli kenar şeridi; üç eş kart satırı; dekoratif durum noktası (yalnız veritabanı
+  bağlantısı gibi gerçek durum).
+- Em-dash ve en-dash (aralıklar kısa çizgiyle).
+- Klişe adlar, sahte-kesin sayılar (tüm veriler "Demo verisi, kurgusal" ve veriden hesaplanır). Anonim giriş sayfası
+  veritabanından veri göstermez.
+- Yalnız renkle anlam; grafikte çift eksen, her noktaya sayı, kesikli ızgara.
 - "Oops", ünlem, özür dileyen hata mesajları; "Submit" gibi belirsiz buton adları.
+
+## Prototip notu
+Prototip (`prototype/`) aynı CSS katmanlarını kullanır; ancak derlenmiş `dist/` fontları Google Fonts'tan yalnız Geist
+olarak yükler (Mona Sans yok) ve Faz 6'nın yeni blokları (kahraman, işlem akışı, yeni giriş paneli) yalnız Razor
+görünümlerindedir. Görsel doğrulama gerçek uygulamada yapılır.

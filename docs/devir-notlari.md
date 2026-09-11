@@ -1,7 +1,7 @@
 # Devir notları: Hesap Masası
 
 Yeni bir oturumun kaldığı yerden devam edebilmesi için güncel durum, kararlar ve kalan işler.
-Son güncelleme: 11 Eylül 2026 (Faz 5 sonu: giriş, entegrasyon testleri, sunum hazırlığı). Şifreler bu dosyada yok;
+Son güncelleme: 11 Eylül 2026 (Faz 6 sonu: görsel yenileme, "Masa" tasarım yönü). Şifreler bu dosyada yok;
 yerel değerler `CLAUDE.md`'de.
 
 ## 1. Durum
@@ -16,6 +16,7 @@ yerel değerler `CLAUDE.md`'de.
 | Faz 3: işlemler, dekont, ekstre, Oracle izi | Tamam, doğrulandı | S8, dekont, S9, Oracle izi paneli |
 | Faz 4: raporlar ve grafikler | Tamam, doğrulandı | S10, S1 grafikleri, detaylarda "Aylık özet" sekmesi |
 | Faz 5: giriş, testler, sunum | Tamam, doğrulandı | S0 ve Identity (`db/05_identity.sql`), 138 birim + 12 entegrasyon testi, yerel fontlar, [demo senaryosu](demo-senaryosu.md) |
+| Faz 6: görsel yenileme | Tamam, doğrulandı | "Masa" tasarım yönü ([../DESIGN.md](../DESIGN.md)): Genex renk dili, Mona Sans, kahraman, işlem akışı şeridi, yeni giriş paneli |
 | **Kalan (kullanıcıda)** | Demo kaydı; demo günü tohum yenilemesi | Bölüm 7 |
 
 Depo: https://github.com/keremsaliherol/genex (`main`). Her doğrulanmış adım commit edilip push'lanır (CLAUDE.md, "Git ve GitHub").
@@ -53,6 +54,25 @@ Faz 5 doğrulaması:
 - Yerel fontlar (tarayıcı paneli): Geist ve Geist Mono × latin/latin-ext, 4 yüz yüklü; `document.fonts.check` Türkçe
   (ğ ş ı İ ç ö ü) ve ₺ − • için doğru; gövde Geist, ekstre dokusu Geist Mono; dış kaynağa istek yok; önyüklenen ana font
   bir kez indirildi.
+
+Faz 6 (görsel yenileme, "Masa" yönü; kurallar [../DESIGN.md](../DESIGN.md)):
+- Renk dili Genex'in kendi sitesinin CSS token'larından: gece laciverti `#1A1A2E`, kızıl `#7B1D1A`/`#A52A27`/`#E63946`,
+  kahraman degradesi `#0F0F1A → #1A1A2E → #2D2D44`. Firma adı ve logosu kullanılmaz. Rol ayrımı: eylem lacivert, etkileşim
+  çivit (`#343A99`), kızıl yalnız kimlik öğeleri ve çıkış tutarları. Grafik renkleri dataviz doğrulayıcısından geçti.
+- Fontlar: Geist (arayüz), Geist Mono (veri), Mona Sans (değişken genişlik: başlık %112 geniş, büyük rakam %84 dar);
+  6 yüz yerelde, `tools/on-yuz-varliklari.mjs` Fontsource paketlerinden kopyalar.
+- İmza öğeleri: iki temada lacivert kenar menü ve kızıl aktif çizgi; genel bakışta kahraman (toplam bakiye + 30 günlük
+  birikimli net akış çizgisi + üç gösterge) ve gerçek son işlemlerden "İşlem akışı" şeridi; Oracle izi her temada koyu
+  terminal; giriş panelinde Genex degradesi üstünde akan maskeli kurgusal defter.
+- Hareket: sayfa girişi (kademeli), sayaçlar, grafik çizimi (yalnız ilk açılış), şerit ve defter döngüsü. Hepsi
+  `prefers-reduced-motion: reduce`'da kapalı; şerit o durumda ince kaydırma çubuklu yatay listeye döner.
+- Doğrulama (tarayıcı paneli, 1440×900 ve 390 px, açık ve koyu tema): Mona Sans / Geist / Geist Mono yüklü, Türkçe
+  glifler doğru; kahraman 643/476 px iki kolon, 390 px'te tek kolon, yatay taşma yok; şeritte 20 öğe (ikinci kopya
+  `aria-hidden`, bağlantıları `tabindex=-1`); Müşteriler, Hesap detay, İşlem yap, Dekont, Bakiye değişimi ve giriş sayfası
+  iki temada gözden geçirildi. Açık temada Oracle izi grup başlıkları terminal renginde (`#9696B0` / `#DCDCE8` zemin
+  `#0B0B14` üstünde). Animasyon anahtar kareleri (`belir`, `akis`, `defter`) CSS'te; panel hareket azaltmayı taklit ettiği
+  için akış zorlanarak ölçüldü (defter −210 → −490 px). Sunucu günlüğü temiz; konsoldaki 401/404 kayıtları önceki bilinçli
+  denemelerden.
 
 ## 2. Yeni oturuma başlarken
 
@@ -189,7 +209,7 @@ Entegrasyon testleri bu kayıtlara ve tohumda pasif hesap, aktif vadesiz hesap v
 |---|---|
 | `db/01_schema.sql` … `05_identity.sql`, `99_temizle.sql`, `00_kur.sql`, `kur.ps1` | Şema, PL/SQL, tohum, doğrulama, kimlik tabloları, silme, kurulum |
 | `db/tools/tohum-uret.mjs` | `prototype/src/data.js`'i Node'da çalıştırıp `03_seed.sql` üretir |
-| `tools/on-yuz-varliklari.mjs` | `theme.css`, ikon sprite'ı, Chart.js, Geist fontları ve `fontlar.css` üretimi, em/en dash kontrolü |
+| `tools/on-yuz-varliklari.mjs` | `theme.css`, ikon sprite'ı, Chart.js, Geist / Geist Mono / Mona Sans fontları ve `fontlar.css` üretimi, em/en dash kontrolü |
 | `src/…Domain/` | Enum'lar, `VeritabaniKodu`, `BakiyeEtkisi`, `HesapNumarasi`; varlıklar |
 | `src/…Application/Ortak/` | `Sonuc`/`AlanHatasi`, `SayfaSonucu`, `TurkceBicim`, `TutarMetni`, `IslemSatiri`, `Csv` |
 | `src/…Application/Musteriler/`, `Hesaplar/`, `Ozet/` | Müşteri, hesap, genel bakış sözleşmeleri ve kuralları; `BakiyeGecmisi`, `PortfoyPozisyonu`, `NakitAkisi` |
@@ -205,7 +225,7 @@ Entegrasyon testleri bu kayıtlara ve tohumda pasif hesap, aktif vadesiz hesap v
 | `src/…Web/Altyapi/` | `SorguDizesi`, `Etiketler`, `WebUzantilari`, `OracleIzUzantilari`, `SqlRenklendirici`, `CsvDosyasi`, `KimlikKaydi` |
 | `src/…Web/TagHelpers/`, `ViewComponents/` | `<ikon>`, `<tutar>`, rozetler, `<kimlik>`, `<th sirala>`; `OracleIziViewComponent` |
 | `src/…Web/Views/` | Shared (`_Layout`, `_YalinLayout`, `_BasEtiketleri`, `_Sayfalama`, `_Bos`, `_AylikOzetTablo`, ...), Musteri, Hesap, Islem, Rapor, Giris, Home, Hata |
-| `src/…Web/wwwroot/` | `css/uygulama.css`, `js/uygulama.js`, `js/grafik.js`; üretilenler: `css/theme.css`, `css/fontlar.css`, `icons/sprite.svg`, `lib/chart.js`, `fonts/` (woff2 + `OFL-Geist.txt`) |
+| `src/…Web/wwwroot/` | `css/uygulama.css`, `js/uygulama.js`, `js/grafik.js`; üretilenler: `css/theme.css`, `css/fontlar.css`, `icons/sprite.svg`, `lib/chart.js`, `fonts/` (woff2 + `OFL-*.txt`) |
 | `tests/MusteriHesapYonetimi.Tests/` | Birim testleri: `DomainKurallariTestleri` (18), `UygulamaKurallariTestleri` (64), `IslemKurallariTestleri` (17), `EkstreTestleri` (12), `RaporTestleri` (27); toplam 138 |
 | `tests/MusteriHesapYonetimi.EntegrasyonTestleri/` | Oracle'a bağlanan testler: `TestOrtami` (bağlantı, `[OracleFact]`, ölçüm yardımcıları), `ModelUyumuTestleri` (2), `PaketRetTestleri` (5), `RaporTutarlilikTestleri` (5) |
 | `docs/demo-senaryosu.md` | 1-2 dk demo akışı, hazırlık ve kayıttan sonra sıfırlama |
@@ -223,7 +243,8 @@ Kullanıcıda:
 
 - HTTPS ve üretim yapılandırması (ortam değişkeninden bağlantı cümlesi ve yönetici parolası, `OracleIzi:Acik=false`).
 - Genex şartnamesinin açık depoya konup konmayacağı kullanıcının kararı.
-- Prototip (`prototype/`) fontları hâlâ Google Fonts'tan yükler; yalnız tasarım aracı olduğu için bırakıldı.
+- Prototip (`prototype/`) fontları hâlâ Google Fonts'tan yükler (yalnız Geist, Mona Sans yok) ve Faz 6'nın yeni blokları
+  (kahraman, işlem akışı, giriş paneli) yalnız Razor'da; prototip yalnız tasarım aracı olduğu için bırakıldı.
 
 ## 9. Bilinen tuzaklar
 
@@ -257,6 +278,11 @@ Kullanıcıda:
 - `geist` npm paketi `next` peer bağımlılığı taşır (npm 7+ Next.js'i de kurar); fontlar Fontsource paketlerinden alınır.
   Font önyüklemesinin adresi `fontlar.css`'teki url ile birebir olmalı (`asp-append-version` yok), yoksa font iki kez iner.
 - Tarayıcı panelinin sistem teması koyu: tema denemesinde açık tema elle seçilir, sonra "Sistem"e dönülür.
+- Tarayıcı paneli `prefers-reduced-motion: reduce` taklit eder: sayfa girişi, sayaç, grafik çizimi ve şerit panelde
+  görünmez (şerit kaydırılabilir listedir). Hareket, anahtar karelerin varlığı ve animasyon zorlanarak ölçülür.
+- Bootstrap başlık rengi `--ink`'e bağlı: her temada koyu kalan yüzeylerde (giriş paneli, Oracle izi) başlık ve metin
+  renkleri açıkça verilir, yoksa açık temada koyu zemin üstünde koyu yazı kalır.
+- Kenar menüye özgü dar ekran kuralları `.hm-sidebar` ile sınırlanır; `.hm-brand-name` giriş sayfasında da kullanılır.
 - Tarayıcı paneli, sayfa kaydırılmışken ekran görüntüsünün üstünde boş bir bant gösterebilir; panel gizliyken ekran
   görüntüsü alınamaz. Ölçüm için JS kullanılır.
 - Proje OneDrive altında: `bin/`, `obj/`, `node_modules/` senkronize olur, dosya kilidi görülebilir.
