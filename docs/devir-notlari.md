@@ -1,7 +1,7 @@
 # Devir notları: Hesap Masası
 
 Yeni bir oturumun kaldığı yerden devam edebilmesi için güncel durum, kararlar ve Faz 5'in kalan planı.
-Son güncelleme: 11 Eylül 2026 (Faz 5, giriş adımı). Şifreler bu dosyada yok; yerel değerler `CLAUDE.md`'de.
+Son güncelleme: 11 Eylül 2026 (Faz 5, giriş ve entegrasyon testleri). Şifreler bu dosyada yok; yerel değerler `CLAUDE.md`'de.
 
 ## 1. Durum
 
@@ -13,8 +13,8 @@ Son güncelleme: 11 Eylül 2026 (Faz 5, giriş adımı). Şifreler bu dosyada yo
 | Faz 1: altyapı | Tamam, doğrulandı | `db/`, `MusteriHesapYonetimi.slnx`, `GET /saglik`, README |
 | Faz 2: müşteri ve hesap CRUD | Tamam, doğrulandı | Kabuk ve tema, S2-S7, S11, genel bakışın gösterge kısmı |
 | Faz 3: işlemler, dekont, ekstre, Oracle izi | Tamam, doğrulandı | S8, dekont, S9, Oracle izi paneli |
-| Faz 4: raporlar ve grafikler | Tamam, doğrulandı | S10, S1 grafikleri, detaylarda "Aylık özet" sekmesi, 138 test |
-| **Faz 5: giriş, testler, sunum** | **Sürüyor.** Giriş tamam ve doğrulandı; sırada entegrasyon testleri | S0, `db/05_identity.sql`; kalan plan Bölüm 7 |
+| Faz 4: raporlar ve grafikler | Tamam, doğrulandı | S10, S1 grafikleri, detaylarda "Aylık özet" sekmesi |
+| **Faz 5: giriş, testler, sunum** | **Sürüyor.** Giriş ve entegrasyon testleri tamam, doğrulandı; sırada sunum | S0, `db/05_identity.sql`, 138 birim + 12 entegrasyon testi; kalan plan Bölüm 7 |
 
 Depo: https://github.com/keremsaliherol/genex (`main`). Her doğrulanmış adım commit edilip push'lanır (CLAUDE.md, "Git ve GitHub").
 
@@ -40,17 +40,22 @@ Faz 4 doğrulaması (her sayı sqlplus'ta ayrı sorguyla karşılaştırıldı; 
   son BAKIYE'si; en aktif "tüm kayıtlar" `VW_EN_AKTIF_HESAPLAR`'dan. Tema değişince grafikler token'lardan yeniden kurulur.
 
 Faz 5 giriş doğrulaması (tarayıcı paneli, sqlplus; sunucu günlüğü temiz):
-- `db\kur.ps1` 6 adımda 15 sn; `ASPNET_USERS`, `_USER_CLAIMS`, `_USER_LOGINS`, `_USER_TOKENS` ve dizinleri
-  (`UQ_ASPNET_USERS_USER_NAME`, `IDX_ASPNET_USERS_EMAIL`, FK dizinleri). Açılışta "Yönetici hesabı oluşturuldu";
-  `PASSWORD_HASH` Identity v3 biçiminde (PBKDF2, 84 karakter), `LOCKOUT_ENABLED` 1.
-- Oturumsuz: `/` → `/Giris?donus=%2F`; `/Musteri?durum=tumu` ve `/Rapor/AylikOzet/5132?kapsam=hesap` dönüş adresiyle
-  girişe; `/api/*` yönlendirme yerine 401; `/saglik`, CSS/JS ve `/Hata/404` anonim. Giriş sayfasında kabuk ve Oracle izi yok.
+- `db\kur.ps1` 6 adımda 15 sn; `ASPNET_USERS`, `_USER_CLAIMS`, `_USER_LOGINS`, `_USER_TOKENS` ve dizinleri. Açılışta
+  "Yönetici hesabı oluşturuldu"; `PASSWORD_HASH` Identity v3 biçiminde (PBKDF2, 84 karakter), `LOCKOUT_ENABLED` 1.
+- Oturumsuz: `/` → `/Giris?donus=%2F`; diğer sayfalar dönüş adresiyle girişe; `/api/*` yönlendirme yerine 401;
+  `/saglik`, CSS/JS ve `/Hata/404` anonim. Giriş sayfasında kabuk ve Oracle izi yok.
 - Boş gönderim: iki alanda Türkçe hata, odak e-postada; parola göster/gizle `aria-pressed`, etiket ve ikonla.
 - Var olmayan e-postayla deneme (kullanıcı yaptı): genel "E-posta veya parola hatalı." mesajı, e-posta korunur, parola boşalır.
 - Başarılı giriş (kullanıcı yaptı; Claude tarayıcıda parola girmez): `/`'ye dönüş, menüde "AD / admin" ve e-posta.
   POST `/Giris`'in komutları Oracle izinde yok. Oturumu kapat: `/Giris` + "Oturum kapatıldı." bildirimi, sonra `/` yine
   girişe, `/api` 401.
 - Kilitlenme (5 hatalı deneme, 5 dk) Identity yapılandırmasıyla; tarayıcıda denenmedi (parola girişi gerektirir).
+
+Faz 5 entegrasyon testleri doğrulaması:
+- `dotnet test tests/MusteriHesapYonetimi.EntegrasyonTestleri`: 12 test gerçek Oracle'a karşı 4 sn'de geçti (model uyumu 2,
+  paket ret 5, rapor tutarlılığı 5). Bağlantı boşken (`ConnectionStrings__HesapMasasi=' '`) 12'si "Atlandı" raporlanır.
+- Birim testleri: 138'i geçiyor. Test projesinin ilk derlemesi Akıllı Uygulama Denetimi'ne takıldı (Bölüm 9); kaynak
+  düzeltmesiyle yeni derleme engellenmedi.
 
 ## 2. Yeni oturuma başlarken
 
@@ -79,8 +84,10 @@ node tools/on-yuz-varliklari.mjs
 # Uygulama (user-secrets hazır: ConnectionStrings:HesapMasasi, Yonetici:Parola)
 dotnet run --project src/MusteriHesapYonetimi.Web --urls http://localhost:5080
 
-# Testler
+# Birim testleri (veritabanı gerekmez)
 dotnet test tests/MusteriHesapYonetimi.Tests
+# Entegrasyon testleri (Oracle; bağlantı Web'in user-secrets'ından ya da ConnectionStrings__HesapMasasi'dan, yoksa atlanır)
+dotnet test tests/MusteriHesapYonetimi.EntegrasyonTestleri
 
 # Prototip (http://localhost:5173)
 node prototype/build.mjs
@@ -93,11 +100,11 @@ node prototype/serve.mjs
 
 | Karar | Neden |
 |---|---|
-| Katmanlar: Domain ← Application ← Data; Web her üçüne, Tests Domain + Application'a bağlı | Şartnamedeki klasör yapısı; Controller'da iş mantığı yok |
+| Katmanlar: Domain ← Application ← Data; Web her üçüne; birim testleri Domain + Application'a, entegrasyon testleri Data'ya bağlı | Şartnamedeki klasör yapısı; Controller'da iş mantığı yok |
 | Servis arayüzleri ve saf iş kuralları Application'da, gerçekleme Data'da | Kurallar veritabanı olmadan test edilir |
 | İş kuralı ihlali istisna değil `Sonuc` döner (alan + mesaj + isteğe bağlı ORA kodu) | Web alanlı hatayı ModelState'e, alansızı bildirime aktarır; veritabanı reddi ayrıca gösterilir |
 | Para hareketi kuralları yalnız PKG_ISLEM'de; uygulama pakete gitmeden önce yalnız zorunlu alan ve tutar biçimini kontrol eder | Kuralın tek kaynağı PL/SQL. Arayüzdeki bakiye/pozisyon kontrolü yalnız erken uyarı; "Yine de gönder" veritabanı reddini gösterir |
-| `PaketHatalari`: ORA-200xx → form alanı (20001 → Tutar ya da Adet, 20012 → Hedef hesap, "Hedef ..." mesajı → hedef alanı) | Hata doğru alanın altında; teknik detayda ORA kodu |
+| `PaketHatalari`: ORA-200xx → form alanı (20001 → Tutar ya da Adet, 20012 → Hedef hesap, "Hedef ..." mesajı → hedef alanı) | Hata doğru alanın altında; teknik detayda ORA kodu. Entegrasyon testleriyle gerçek paket üzerinde doğrulanır |
 | PKG_ISLEM çağrısı Dapper ile, isimli bağlama (`p_x => :x`), transaction .NET'te (`OracleTransaction`); hata olursa ROLLBACK | Paketler COMMIT etmez; transferin iki kaydı birlikte yazılır ya da hiçbiri |
 | Dekonttaki işlem sonrası bakiye: güncel bakiye − sonraki hareketlerin işaretli toplamı | Ek kolon gerekmez; trigger kuralıyla aynı işaret |
 | Ekstre Dapper ile: dönem başı bakiye `NVL(SUM(...))`, yürüyen bakiye `SUM() OVER (ORDER BY ISLEM_TARIHI, ISLEM_ID)`; tarih koşulu aralık | IDX_ISLEM_HESAP_TARIH kullanılır; tip filtresi yalnız gösterilen satırları daraltır |
@@ -108,17 +115,18 @@ node prototype/serve.mjs
 | Oracle izi varsayılan yalnız Development'ta (`OracleIzi:Acik`); SQL renklendirme sunucuda | Üretimde bind değerleri gösterilmez |
 | **Raporlar:** PKG_RAPOR Dapper ile; `OracleParametreleri.RefCursor` çıktısı ODP.NET'te komutun sonuç kümesi olarak döner | Şartname 5.2 ve Faz 4: stored procedure + REF CURSOR, .NET'te Dapper |
 | REF CURSOR satırları kolon adlarıyla aynı büyük harfli özellikli özel sınıflara okunur | Paket sorgusunun kolonları çağıranda yeniden adlandırılamaz; global Dapper ayarı değiştirilmez |
-| `BAKIYE_DEGISIMI`: `p_acilis` OUT, yürüyen bakiye paket içinde; özet `BakiyeDegisimOzeti.Hesapla` ile yeniden hesaplanır | İki bağımsız hesap aynı çıkmalı: kapanış = paketin son BAKIYE'si = güncel bakiye |
-| En aktif: dönemli raporda `PKG_RAPOR.EN_AKTIF`, "tüm kayıtlar"da `VW_EN_AKTIF_*` (sıralama sorguda); genel bakışta son 30 gün, ilk 5 | View tarih süzgeci almaz; iki yol da izde görünür |
+| `BAKIYE_DEGISIMI`: `p_acilis` OUT, yürüyen bakiye paket içinde; özet `BakiyeDegisimOzeti.Hesapla` ile yeniden hesaplanır | İki bağımsız hesap aynı çıkmalı: kapanış = paketin son BAKIYE'si = güncel bakiye (entegrasyon testi) |
+| En aktif: dönemli raporda `PKG_RAPOR.EN_AKTIF`, "tüm kayıtlar"da `VW_EN_AKTIF_*` (sıralama sorguda); genel bakışta son 30 gün, ilk 5 | View tarih süzgeci almaz; iki yol da izde görünür, entegrasyon testi aynı sonucu verdiklerini denetler |
 | Rapor filtreleri `[FromQuery]` olmadan bağlanır (route veya sorgu); CSV bağlantıları açık değerlerle | `Url.Action(..., new { id })` id'yi yola koyar |
 | **Grafikler:** Chart.js 4.4.1 `wwwroot/lib/chart.js`'te, yalnız `ViewData["Grafik"] = true` sayfalarında; veri `data-veri` JSON; renkler `--viz-*` token'larından, `hm:tema` olayında yeniden kurulur; her grafiğin tablo karşılığı | Sunucu çizer, JS yalnız iyileştirir; CDN yok; dataviz kuralları |
 | **Oturum:** ASP.NET Core Identity (`AddIdentityCore` + `SignInManager` + Identity çerezleri), tek yönetici, rol yok (`IdentityUserContext`). Tüm uç noktalar `FallbackPolicy` ile oturum ister; `/Giris`, `/Hata`, statik dosyalar (`MapStaticAssets().AllowAnonymous()`) ve `/saglik` anonim | Controller'lara tek tek `[Authorize]` yazılmaz; yeni eklenen uç nokta unutulsa da korunur |
-| Kimlik tabloları `db/05_identity.sql` ile; DDL `KimlikDbContext` modelinden EF'nin `GenerateCreateScript()` çıktısı (scratch konsol projesi, Bölüm 9). Bağlam adları tırnaksız büyük harfe eşler (`ASPNET_USERS`, `NORMALIZED_USER_NAME`), metinler VARCHAR2, bayraklar NUMBER(1) + CHECK | Şema betiklerle yönetilir, migration yok; model ile DDL aynı kaynaktan. .NET 10 şema sürümleri bu bağlamda aynı 4 tabloyu üretir (passkey tablosu yok) |
+| Kimlik tabloları `db/05_identity.sql` ile; DDL `KimlikDbContext` modelinden EF'nin `GenerateCreateScript()` çıktısı (Bölüm 9). Bağlam adları tırnaksız büyük harfe eşler (`ASPNET_USERS`, `NORMALIZED_USER_NAME`), metinler VARCHAR2, bayraklar NUMBER(1) + CHECK | Şema betiklerle yönetilir, migration yok; model ile DDL aynı kaynaktan. .NET 10 şema sürümleri bu bağlamda aynı 4 tabloyu üretir |
 | Yönetici hesabı açılışta yoksa oluşturulur (`Yonetici:Eposta`, varsayılan `admin@hesapmasasi.local`; `Yonetici:Parola` user-secrets/ortam değişkeni). Veritabanı hazır değilse uygulama yine açılır, neden günlüğe yazılır | Parola koda ve depoya girmez; `kur.ps1` sıfırlamasından sonra hesap kendiliğinden döner |
 | Kilitlenme 5 hatalı deneme / 5 dk; hata mesajı genel, kalan deneme sayısı gösterilmez; parola en az 10 karakter + Identity karakter kuralları | Hesap varlığı ele verilmez (kullanıcı adı taraması yapılamaz) |
 | Çerez `hm-oturum` (HttpOnly, SameSite=Lax, 8 saat kayan); dönüş parametresi `donus` (`Url.IsLocalUrl`); `/api` isteklerinde yönlendirme yerine 401; çıkış POST + antiforgery | fetch giriş sayfasını JSON diye okumaz; açık yönlendirme ve CSRF'ye karşı |
 | `KimlikDbContext` Oracle izine bağlanmaz | Bind değerlerinde parola özeti ve güvenlik damgası görünürdü |
 | Giriş sayfası kabuksuz (`_YalinLayout`; iki layout'un ortak `<head>`'i `_BasEtiketleri`). Paneldeki ekstre dokusu sabit tohumlu kurgusal satırlar, hesap no maskeli; demo hesabı ipucu yalnız Development'ta ve parola ayardan okunur | Anonim sayfa veritabanından veri göstermez |
+| **Entegrasyon testleri** ayrı projede (`MusteriHesapYonetimi.EntegrasyonTestleri`, Data'ya bağlı). Bağlantı Web projesinin user-secrets deposundan (aynı `UserSecretsId`) ya da `ConnectionStrings__HesapMasasi`'dan; tanımlı değilse `[OracleFact]` testi atlar. Veri değiştiren test yok: yalnız okuma ve paketin reddettiği (ROLLBACK edilen) işlemler, her birinde bakiye ve işlem sayısı öncesiyle aynı | Birim testleri veritabanısız hızlı kalır; Oracle olmayan CI kırmızıya dönmez; testler demo verisini bozmaz ve tekrar tekrar çalışır |
 | Hesap açma tek transaction: `MUSTERI ... FOR UPDATE` (EF `FromSql`) → EF insert → Dapper `PKG_ISLEM.YATIR` → COMMIT | Aynı müşteriye eşzamanlı iki açılış aynı EK_NO'yu alamaz |
 | Türkçe sıralama ve arama: `NLSSORT(..., 'NLS_SORT=XTURKISH')` ve `NLS_UPPER` EF `DbFunction` eşlemesiyle | Oturum ayarı havuzdaki bağlantıda durum taşır; bu yol SQL'de görünür |
 | Tutar alanları metin olarak bağlanır, `TutarMetni` ayrıştırır; istemcide aynı kural, tutarlar kuruş | tr-TR model bağlayıcı "8140.25"i 814025 okur |
@@ -174,7 +182,8 @@ Transfer iki hesabı küçük `HESAP_ID` önce olacak şekilde `FOR UPDATE` ile 
 
 **Tohum veri:** 180 müşteri (5 pasif, ID 1-180), 281 hesap (9 pasif, ID 5001-5281), 10.997 işlem
 (ID 1000001-1010997), 8 BIST hissesi (temsili fiyat). Müşteri no 8 hane, hesap no `1001-<müşteri no>-<ek no>`.
-Demo için kullanışlı kayıtlar: Göksu Mobilya Ltd. Şti. (müşteri 88, hesap 5132 `1001-55510734-02`, en aktif hesap).
+Demo için kullanışlı kayıtlar: Göksu Mobilya Ltd. Şti. (müşteri 88, vadesiz hesap 5132 `1001-55510734-02`, en aktif hesap).
+Entegrasyon testleri bu kayıtlara ve tohumda pasif hesap, aktif vadesiz hesap ve açık hisse pozisyonu bulunmasına dayanır.
 
 ## 6. Kod haritası
 
@@ -199,20 +208,17 @@ Demo için kullanışlı kayıtlar: Göksu Mobilya Ltd. Şti. (müşteri 88, hes
 | `src/…Web/TagHelpers/`, `ViewComponents/` | `<ikon>`, `<tutar>`, rozetler, `<kimlik>`, `<th sirala>`; `OracleIziViewComponent` |
 | `src/…Web/Views/` | Shared (`_Layout`, `_YalinLayout`, `_BasEtiketleri`, `_Sayfalama`, `_Bos`, `_AylikOzetTablo`, ...), Musteri, Hesap, Islem, Rapor, Giris, Home, Hata |
 | `src/…Web/wwwroot/` | `css/theme.css` (üretilir), `css/uygulama.css`, `js/uygulama.js`, `js/grafik.js`, `icons/sprite.svg` ve `lib/chart.js` (üretilir) |
-| `tests/…/` | `DomainKurallariTestleri` (18), `UygulamaKurallariTestleri` (64), `IslemKurallariTestleri` (17), `EkstreTestleri` (12), `RaporTestleri` (27); toplam 138 |
+| `tests/MusteriHesapYonetimi.Tests/` | Birim testleri: `DomainKurallariTestleri` (18), `UygulamaKurallariTestleri` (64), `IslemKurallariTestleri` (17), `EkstreTestleri` (12), `RaporTestleri` (27); toplam 138 |
+| `tests/MusteriHesapYonetimi.EntegrasyonTestleri/` | Oracle'a bağlanan testler: `TestOrtami` (bağlantı, `[OracleFact]`, ölçüm yardımcıları), `ModelUyumuTestleri` (2), `PaketRetTestleri` (5), `RaporTutarlilikTestleri` (5) |
 
 ## 7. Faz 5'in kalan planı
 
-Tamamlanan: Identity (tek yönetici, kilitlenme), kimlik tabloları SQL betiğiyle, S0 giriş ekranı, oturumu kapat.
+Tamamlanan: Identity (tek yönetici, kilitlenme), kimlik tabloları SQL betiğiyle, S0 giriş ekranı, oturumu kapat,
+Oracle entegrasyon testleri.
 
-1. **Entegrasyon testleri (sırada):** ayrı proje `tests/MusteriHesapYonetimi.EntegrasyonTestleri` (Data'ya bağlı). Bağlantı
-   Web projesinin user-secrets'ından ya da `ConnectionStrings__HesapMasasi` ortam değişkeninden; tanımlı değilse testler
-   atlanır. Veriyi değiştirmeyen senaryolar: PKG_ISLEM ret kodlarının form alanına eşlenmesi ve reddedilen işlemin kayıt
-   yazmaması (bakiye ve ISLEM sayısı aynı), rapor tutarlılığı (aylık özet net etkisi = ekstre giriş − çıkış; bakiye değişimi
-   kapanışı = HESAP.BAKIYE; `EN_AKTIF` ile `VW_EN_AKTIF_*` aynı sıra), EF modellerinin tablo ve kolonlarla uyumu
-   (HesapMasasiDbContext ve KimlikDbContext).
-2. **Sunum:** Geist fontları `wwwroot/fonts` altına (Google Fonts bağımlılığı kalkar); tohum veriyi demo gününe göre yeniden
-   üret ve kur; README'ye gerçek uygulamadan ekran görüntüleri; 1-2 dk demo senaryosu (kaydı kullanıcı yapar).
+1. **Sunum (sırada):** Geist fontları `wwwroot/fonts` altına (Google Fonts bağımlılığı kalkar); README'ye ekran
+   görüntüleri; 1-2 dk demo senaryosu (kaydı kullanıcı yapar). Demo gününden önce tohum veri yeniden üretilip kurulur ve
+   entegrasyon testleri tekrar çalıştırılır.
 
 ## 8. Sonraki adımlar (Faz 5 sonrası)
 
@@ -245,19 +251,22 @@ Tamamlanan: Identity (tek yönetici, kilitlenme), kimlik tabloları SQL betiğiy
 - Kimlik DDL'ini yeniden üretmek için: scratchpad'de Data projesine referanslı bir konsol projesi `AddDbContext<KimlikDbContext>`
   (Oracle, 19c uyumluluk) ve `AddIdentityCore<IdentityUser>().AddEntityFrameworkStores<KimlikDbContext>()` kaydeder,
   `db.Database.GenerateCreateScript()` yazdırır (bağlanmaz). Çıktı `05_identity.sql`'deki adlandırmaya çevrilir.
+- Entegrasyon testlerini atlanmış görmek için bağlantıyı boşlukla ezmek yeter: `ConnectionStrings__HesapMasasi=' '`
+  (Windows'ta boş ortam değişkeni tanımlanamaz). Aynı derlemeyi yeniden çalıştırmak için `--no-build`.
 - Tarayıcı panelinin sistem teması koyu: tema denemesinde açık tema elle seçilir, sonra "Sistem"e dönülür.
 - Tarayıcı paneli, sayfa kaydırılmışken ekran görüntüsünün üstünde boş bir bant gösterebilir; panel gizliyken ekran
   görüntüsü alınamaz. Ölçüm için JS kullanılır.
 - Proje OneDrive altında: `bin/`, `obj/`, `node_modules/` senkronize olur, dosya kilidi görülebilir.
 - Windows Akıllı Uygulama Denetimi açık (`VerifiedAndReputablePolicyState = 1`). İmzasız yeni derlenmiş bir DLL'i
   engelleyebilir: sunucu "Uygulama Denetimi ilkesi bu dosyayı engelledi (0x800711C7)" ile kapanır, tarayıcı paneli yine
-  "başladı" der (CodeIntegrity olay 3077/3033). Faz 3'ün son derlemesi engellendi, Faz 4 ve Faz 5 derlemeleri (scratch konsol
-  dahil) engellenmedi. Sunucu başladıktan sonra `preview_logs` ile ilk istek kontrol edilir.
+  "başladı" der; test çalıştırıcısı "Catastrophic failure ... 0x800711C7" ve "hiç test yok" der (CodeIntegrity olay
+  3077/3033). Faz 3'ün son web derlemesi ve entegrasyon test projesinin ilk derlemesi engellendi; bir sonraki derleme
+  (kaynak değişikliğiyle) geçti. Sunucu başladıktan sonra `preview_logs` ile ilk istek kontrol edilir.
 
 ## 10. Açık konular
 
-- Akıllı Uygulama Denetimi yeniden engellerse seçenekler kullanıcının (Denetimi kapatmak, uygulamayı Docker/WSL içinde
-  çalıştırmak ya da sonraki derlemede tekrar denemek). Sistem güvenlik ayarı Claude tarafından değiştirilmez.
+- Akıllı Uygulama Denetimi yeniden engellerse seçenekler kullanıcının (Denetimi kapatmak, uygulamayı ve testleri
+  Docker/WSL içinde çalıştırmak ya da sonraki derlemede tekrar denemek). Sistem güvenlik ayarı Claude tarafından değiştirilmez.
 - Genex şartnamesi (`musteri_hesap_yonetim_proje_speq.md`) açık depoya konma izni netleşene kadar `.gitignore`'da.
 - Fontlar şimdilik Google Fonts'tan (sistem fontu yedeğiyle); self-host Faz 5'in sunum adımında.
 - HTTPS gerekirse eklenecek.

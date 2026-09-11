@@ -28,7 +28,7 @@ PL/SQL'de tutulur. Bu proje o düzeni küçük ölçekte kurar:
 | Faz 2: müşteri ve hesap ekranları (liste, detay, ekle/düzenle, hesap aç, pasife al) | Tamam |
 | Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Tamam |
 | Faz 4: raporlar (aylık özet, bakiye değişimi, en aktif), genel bakış grafikleri | Tamam |
-| Faz 5: giriş (Identity, kimlik tabloları SQL betiğiyle), testler, sunum | Sürüyor (giriş tamam) |
+| Faz 5: giriş (Identity, kimlik tabloları SQL betiğiyle), Oracle entegrasyon testleri, sunum | Sürüyor (giriş ve testler tamam) |
 
 Ayrıntılı durum ve kararlar: [docs/devir-notlari.md](docs/devir-notlari.md).
 
@@ -107,6 +107,18 @@ Bağlantı cümlesi ve yönetici parolası koda ve `appsettings.json`'a yazılma
 `admin@hesapmasasi.local` hesabını bu parolayla oluşturur (`Yonetici:Eposta` ile değiştirilebilir); `db/kur.ps1` kimlik
 tablolarını da sıfırladığı için kurulumdan sonra uygulama yeniden başlatılır. Geliştirme ortamında giriş sayfası demo
 hesabını gösterir. Sağlık kontrolü: `GET /saglik` (oturum istemez).
+
+### 4. Testler
+
+```powershell
+dotnet test tests/MusteriHesapYonetimi.Tests               # birim testleri, veritabanı gerekmez
+dotnet test tests/MusteriHesapYonetimi.EntegrasyonTestleri # Oracle'a karşı; bağlantı tanımlı değilse atlanır
+```
+
+Entegrasyon testleri bağlantıyı Web projesinin user-secrets deposundan ya da `ConnectionStrings__HesapMasasi` ortam
+değişkeninden okur ve veriyi değiştirmez: EF modellerinin betiklerdeki tablolarla uyumunu, `PKG_ISLEM`'in reddettiği
+işlemlerin doğru form alanına eşlenip hiçbir kayıt yazmadığını ve raporların (aylık özet, ekstre, bakiye değişimi,
+`EN_AKTIF` paketi ile view'lar) birbirini ve `HESAP.BAKIYE`'yi tuttuğunu denetler.
 
 ## Prototip
 

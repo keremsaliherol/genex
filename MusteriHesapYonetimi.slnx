@@ -6,6 +6,7 @@
     <Project Path="src/MusteriHesapYonetimi.Web/MusteriHesapYonetimi.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/MusteriHesapYonetimi.EntegrasyonTestleri/MusteriHesapYonetimi.EntegrasyonTestleri.csproj" />
     <Project Path="tests/MusteriHesapYonetimi.Tests/MusteriHesapYonetimi.Tests.csproj" />
   </Folder>
 </Solution>
