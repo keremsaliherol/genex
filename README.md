@@ -28,7 +28,7 @@ PL/SQL'de tutulur. Bu proje o düzeni küçük ölçekte kurar:
 | Faz 2: müşteri ve hesap ekranları (liste, detay, ekle/düzenle, hesap aç, pasife al) | Tamam |
 | Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Tamam |
 | Faz 4: raporlar (aylık özet, bakiye değişimi, en aktif), genel bakış grafikleri | Tamam |
-| Faz 5: giriş (Identity, kimlik tabloları SQL betiğiyle), Oracle entegrasyon testleri, sunum | Sürüyor (giriş ve testler tamam) |
+| Faz 5: giriş (Identity, kimlik tabloları SQL betiğiyle), Oracle entegrasyon testleri, yerel fontlar, demo senaryosu | Tamam |
 
 Ayrıntılı durum ve kararlar: [docs/devir-notlari.md](docs/devir-notlari.md).
 
@@ -46,6 +46,22 @@ hesap ve müşteri kapsamında; bakiye değişiminde dönem başı bakiye OUT pa
 `SUM() OVER`); "tüm kayıtlar" en aktif raporu şartnamedeki `VW_EN_AKTIF_*` view'larından. Genel bakışta 30 günlük nakit
 akışı, en aktif müşteriler ve hesap dağılımı. Grafikler Chart.js ile, renkler tema token'larından (açık ve koyu), her
 grafiğin tablo karşılığı ve CSV'si var.
+
+Faz 5'ten öne çıkanlar: ASP.NET Core Identity ile tek yönetici hesabı; kimlik tabloları da şema gibi SQL betiğiyle
+(`db/05_identity.sql`, DDL EF modelinden üretildi, migration yok). Tüm uç noktalar varsayılan olarak oturum ister; 5 hatalı
+denemede hesap kilitlenir, hata mesajı hesabın varlığını ele vermez. Oracle'a bağlanan 12 entegrasyon testi paket ret
+kodlarını ve raporların birbirini tuttuğunu gerçek veritabanında denetler. Fontlar ve Chart.js yerelden sunulur; sayfalar
+dış kaynağa istek yapmaz.
+
+## Ekranlar
+
+| | |
+|---|---|
+| ![Genel bakış: göstergeler, 30 günlük nakit akışı, en aktif müşteriler](docs/ekran/01-genel-bakis.png) | ![Aylık işlem özeti: PKG_RAPOR REF CURSOR sonucu](docs/ekran/06-rapor-aylik-ozet.png) |
+| ![İşlem yap: transferin çift kayıt önizlemesi](docs/ekran/04-islem-transfer.png) | ![Hesap ekstresi: SUM() OVER ile yürüyen bakiye](docs/ekran/05-ekstre.png) |
+
+Görüntüler tıklanabilir prototipten (`prototype/`); uygulama aynı tasarım sistemini ve token'ları kullanır. Kısa demo
+akışı: [docs/demo-senaryosu.md](docs/demo-senaryosu.md).
 
 ## Mimari
 
@@ -65,7 +81,8 @@ db/
   kur.ps1         hepsini konteynerde sırayla çalıştırır
 docs/             arayüz planı, ekran görüntüleri, devir notları
 prototype/        tıklanabilir arayüz prototipi
-tools/            on-yuz-varliklari.mjs: prototipten tema CSS'i ve ikon sprite'ı üretir
+tools/            on-yuz-varliklari.mjs: prototipten tema CSS'i ve ikon sprite'ı üretir, Chart.js'i ve Geist
+                  fontlarını (Fontsource, OFL) wwwroot'a kopyalar; sayfalar dış kaynaktan font ya da betik yüklemez
 ```
 
 Katmanlar tek yönlü bağımlıdır: Web → Application/Data → Domain. Şema SQL betikleriyle yönetilir;

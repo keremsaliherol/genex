@@ -1,4 +1,5 @@
-@* İki layout'un ortak <head> içeriği: tema betiği, yazı tipleri ve stiller. *@
+@* İki layout'un ortak <head> içeriği: tema betiği, yazı tipleri ve stiller. Fontlar yerelde (css/fontlar.css,
+   tools/on-yuz-varliklari.mjs üretir); dış kaynağa istek yok. *@
 <script>
     // Tema tercihi boyamadan önce uygulanır; açık ve koyu arasında yanıp sönme olmaz.
     (function () {
@@ -11,9 +12,10 @@
         r.setAttribute('data-bs-theme', d);
     })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+@* Ana metin fontu CSS'ten keşfedilmeden indirilmeye başlar: ilk boyamada yedek fonttan Geist'e zıplama olmaz.
+   Adres fontlar.css'teki url ile aynı (sürüm eki yok), yoksa tarayıcı dosyayı iki kez indirir. *@
+<link rel="preload" href="/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="~/css/fontlar.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/uygulama.css" asp-append-version="true" />
