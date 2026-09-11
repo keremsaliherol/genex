@@ -1,11 +1,13 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Oracle.ManagedDataAccess.Client;
 
 namespace MusteriHesapYonetimi.Web.Controllers;
 
-/// <summary>404 ve beklenmeyen hata sayfaları (S11). İstek kimliği destek için gösterilir.</summary>
+/// <summary>404 ve beklenmeyen hata sayfaları (S11). İstek kimliği destek için gösterilir. Oturumsuz da açılır.</summary>
+[AllowAnonymous]
 [Route("Hata")]
 [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 public sealed class HataController : Controller

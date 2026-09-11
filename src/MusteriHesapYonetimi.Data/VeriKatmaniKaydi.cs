@@ -9,6 +9,7 @@ using MusteriHesapYonetimi.Application.Sistem;
 using MusteriHesapYonetimi.Data.Hesaplar;
 using MusteriHesapYonetimi.Data.Islemler;
 using MusteriHesapYonetimi.Data.Izleme;
+using MusteriHesapYonetimi.Data.Kimlik;
 using MusteriHesapYonetimi.Data.Musteriler;
 using MusteriHesapYonetimi.Data.Ozet;
 using MusteriHesapYonetimi.Data.Raporlar;
@@ -34,6 +35,10 @@ public static class VeriKatmaniKaydi
             if (oracleIzi) o.AddInterceptors(IzInterceptor);
         });
         if (oracleIzi) services.AddSingleton<OracleIzDeposu>();
+
+        // Kimlik deposu (ASP.NET Core Identity): Oracle izi bağlanmaz, bind değerlerinde parola özeti görünürdü.
+        services.AddDbContext<KimlikDbContext>(o =>
+            o.UseOracle(baglantiCumlesi, oracle => oracle.UseOracleSQLCompatibility(OracleSQLCompatibility.DatabaseVersion19)));
 
         services.AddSingleton(new OracleBaglantiFabrikasi(baglantiCumlesi));
         services.AddScoped<ISistemDurumuSorgusu, SistemDurumuSorgusu>();

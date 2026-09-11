@@ -28,7 +28,7 @@ PL/SQL'de tutulur. Bu proje o düzeni küçük ölçekte kurar:
 | Faz 2: müşteri ve hesap ekranları (liste, detay, ekle/düzenle, hesap aç, pasife al) | Tamam |
 | Faz 3: işlem yap (yatır, çek, transfer, hisse), dekont, ekstre, Oracle izi paneli | Tamam |
 | Faz 4: raporlar (aylık özet, bakiye değişimi, en aktif), genel bakış grafikleri | Tamam |
-| Faz 5: giriş (Identity), sunum | Sırada |
+| Faz 5: giriş (Identity, kimlik tabloları SQL betiğiyle), testler, sunum | Sürüyor (giriş tamam) |
 
 Ayrıntılı durum ve kararlar: [docs/devir-notlari.md](docs/devir-notlari.md).
 
@@ -99,10 +99,14 @@ Betik sonunda bakiye tutarlılığını ve `PKG_ISLEM` duman testini raporlar. T
 
 ```powershell
 dotnet user-secrets set "ConnectionStrings:HesapMasasi" "User Id=hesap;Password=<uygulama-sifresi>;Data Source=localhost:1521/FREEPDB1" --project src/MusteriHesapYonetimi.Web
+dotnet user-secrets set "Yonetici:Parola" "<en az 10 karakter, büyük/küçük harf, rakam ve simge>" --project src/MusteriHesapYonetimi.Web
 dotnet run --project src/MusteriHesapYonetimi.Web
 ```
 
-Bağlantı cümlesi koda ve `appsettings.json`'a yazılmaz. Sağlık kontrolü: `GET /saglik`.
+Bağlantı cümlesi ve yönetici parolası koda ve `appsettings.json`'a yazılmaz. Uygulama açılışta yönetici hesabı yoksa
+`admin@hesapmasasi.local` hesabını bu parolayla oluşturur (`Yonetici:Eposta` ile değiştirilebilir); `db/kur.ps1` kimlik
+tablolarını da sıfırladığı için kurulumdan sonra uygulama yeniden başlatılır. Geliştirme ortamında giriş sayfası demo
+hesabını gösterir. Sağlık kontrolü: `GET /saglik` (oturum istemez).
 
 ## Prototip
 

@@ -1,0 +1,33 @@
+@* Kabuksuz sayfalar (giriş): menü, üst çubuk ve Oracle izi yok. *@
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider Surum
+@{
+    var bildirim = TempData["Bildirim"] as string;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Baslik"] | Hesap Masası</title>
+    <partial name="_BasEtiketleri" />
+</head>
+<body data-sprite="@Surum.AddFileVersionToPath(Context.Request.PathBase, IkonluTagHelper.SpriteYolu)">
+    <main id="icerik">
+        @RenderBody()
+    </main>
+    <div class="toast-alani" id="toast-alani" aria-live="polite">
+        @if (bildirim is not null)
+        {
+            <div class="toast" role="status" data-otomatik data-bs-delay="4000">
+                <div class="toast-body">
+                    <ikon ad="check-circle" />
+                    <span class="flex-grow-1">@bildirim</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Kapat"></button>
+                </div>
+            </div>
+        }
+    </div>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/uygulama.js" asp-append-version="true"></script>
+</body>
+</html>

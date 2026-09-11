@@ -28,6 +28,8 @@ builder.Services.AddControllersWithViews(o =>
 // Oracle izi: her ekranın çalıştırdığı SQL/PL-SQL alt panelde. Varsayılan yalnız Development'ta açık.
 var oracleIzi = builder.Configuration.GetValue("OracleIzi:Acik", builder.Environment.IsDevelopment());
 builder.Services.AddVeriKatmani(baglantiCumlesi, oracleIzi);
+// Oturum: tek yönetici (ASP.NET Core Identity, çerez). Tüm uç noktalar varsayılan olarak oturum ister.
+builder.Services.AddKimlik();
 
 var app = builder.Build();
 
@@ -49,12 +51,14 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 if (oracleIzi) app.UseOracleIzi();
 
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
-app.MapStaticAssets();
+// Giriş sayfası stil ve betiklerini oturumsuz yükler
+app.MapStaticAssets().AllowAnonymous();
 
-// Sağlık kontrolü: Oracle bağlantısı, şema durumu ve iki erişim yolu (Dapper + EF Core).
+// Sağlık kontrolü: Oracle bağlantısı, şema durumu ve iki erişim yolu (Dapper + EF Core). İzleme araçları için anonim.
 app.MapGet("/saglik", async (ISistemDurumuSorgusu sorgu, CancellationToken ct) =>
-    Results.Ok(await sorgu.OkuAsync(ct)));
+    Results.Ok(await sorgu.OkuAsync(ct))).AllowAnonymous();
 
 app.MapAramaUclari();
 if (oracleIzi) app.MapOracleIzi();
@@ -63,5 +67,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+// İlk çalıştırmada ve db\kur.ps1 sonrasında yönetici hesabı (Yonetici:Eposta, Yonetici:Parola)
+await app.YoneticiHesabiniHazirlaAsync();
 
 app.Run();

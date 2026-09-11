@@ -25,6 +25,10 @@
     var bildirim = TempData["Bildirim"] as string;
     var bildirimHata = TempData["BildirimTur"] as string == "hata";
     var geriAl = TempData["BildirimGeriAl"] as string;
+    // Oturumdaki kullanıcı: admin@hesapmasasi.local → "admin", rozet "AD"
+    var kullanici = User.Identity?.Name ?? string.Empty;
+    var kisaAd = kullanici.Split('@')[0];
+    var harfler = (kisaAd.Length > 2 ? kisaAd[..2] : kisaAd).ToUpperInvariant();
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -32,24 +36,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@baslik | Hesap Masası</title>
-    <script>
-        // Tema tercihi boyamadan önce uygulanır; açık ve koyu arasında yanıp sönme olmaz.
-        (function () {
-            var r = document.documentElement, t = null;
-            r.classList.add('js');
-            try { t = localStorage.getItem('hm-tema'); } catch (e) { t = null; }
-            if (t === 'acik') r.setAttribute('data-theme', 'light');
-            else if (t === 'koyu') r.setAttribute('data-theme', 'dark');
-            var d = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            r.setAttribute('data-bs-theme', d);
-        })();
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/uygulama.css" asp-append-version="true" />
+    <partial name="_BasEtiketleri" />
 </head>
 <body class="@(izGirdileri is null ? "iz-yok" : null)" data-sprite="@Surum.AddFileVersionToPath(Context.Request.PathBase, IkonluTagHelper.SpriteYolu)">
     <a class="skip-link" href="#icerik">İçeriğe atla</a>
@@ -109,15 +96,21 @@
                     }
                     <div class="dropdown">
                         <button type="button" class="btn btn-ghost" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Kullanıcı menüsü">
-                            <span class="hm-avatar" aria-hidden="true">AD</span><span class="etiket">admin</span><ikon ad="caret-down" class="ic-14" />
+                            <span class="hm-avatar" aria-hidden="true">@harfler</span><span class="etiket">@kisaAd</span><ikon ad="caret-down" class="ic-14" />
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" style="min-width:250px">
-                            <li class="px-3 py-2"><div class="fw-semibold">admin</div><div class="form-text m-0">Oturum açma Faz 5'te (ASP.NET Core Identity)</div></li>
+                            <li class="px-3 py-2"><div class="fw-semibold">@kisaAd</div><div class="form-text m-0 text-truncate">@kullanici</div></li>
                             <li><hr class="dropdown-divider" /></li>
                             <li><h3 class="dropdown-header">Görünüm</h3></li>
                             <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="sistem">Sistem<ikon ad="check" class="ic-16 tik" /></button></li>
                             <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="acik">Açık<ikon ad="check" class="ic-16 tik" /></button></li>
                             <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="koyu">Koyu<ikon ad="check" class="ic-16 tik" /></button></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <form method="post" asp-controller="Giris" asp-action="Cikis">
+                                    <button type="submit" class="dropdown-item"><ikon ad="sign-out" />Oturumu kapat</button>
+                                </form>
+                            </li>
                         </ul>
                     </div>
                 </div>

@@ -1,0 +1,78 @@
+@model GirisKaydi
+@inject IWebHostEnvironment Ortam
+@inject IConfiguration Ayarlar
+@{
+    Layout = "_YalinLayout";
+    ViewData["Baslik"] = "Oturum açın";
+    // Demo hesabı ipucu yalnız geliştirmede; parola koddan değil user-secrets'tan okunur.
+    var ipucuParola = Ortam.IsDevelopment() ? Ayarlar["Yonetici:Parola"] : null;
+    var eposta = Ayarlar["Yonetici:Eposta"] ?? KimlikKaydi.VarsayilanEposta;
+    var kilitli = ViewData["Kilitli"] is true;
+    var hatali = ViewData["Hatali"] is true;
+    var kilitDakika = (int)KimlikKaydi.KilitSuresi.TotalMinutes;
+
+    // Paneldeki ekstre dokusu dekoratiftir ve kurgusaldır: anonim sayfa veritabanından hiçbir kayıt göstermez,
+    // hesap numaraları maskelidir. Sabit tohumlu üretim her açılışta aynı görüntüyü verir.
+    var rastgele = new Random(2026);
+    string[] tipler = ["YATIRMA", "CEKME", "CEKME", "TRANSFER_GIDEN", "TRANSFER_GELEN", "ALIM", "SATIM"];
+    var dakika = 9 * 60;
+    var doku = string.Join("\n", Enumerable.Range(0, 18).Select(_ =>
+    {
+        dakika += rastgele.Next(2, 22);
+        var tip = tipler[rastgele.Next(tipler.Length)];
+        var tutar = rastgele.Next(10_000, 1_500_000) / 100m * (tip is "YATIRMA" or "TRANSFER_GELEN" or "SATIM" ? 1 : -1);
+        return $"{TurkceBicim.Tarih(DateTime.Today)} {dakika / 60:00}:{dakika % 60:00}  1001-••••{rastgele.Next(1000, 9999)}-0{rastgele.Next(1, 4)}  {tip,-15} {TurkceBicim.Para(tutar, true),16}";
+    }));
+}
+<div class="giris-sayfa">
+    <div class="giris-form">
+        <div class="d-flex align-items-center gap-2"><span class="hm-brand-mark"><ikon ad="vault" /></span><span class="fw-semibold">Hesap Masası</span></div>
+        <form method="post" asp-controller="Giris" asp-action="Index" novalidate data-giris-formu>
+            <h1>Oturum açın</h1>
+            @if (kilitli)
+            {
+                <div class="uyari uyari--hata" role="alert">
+                    <ikon ad="warning-circle" />
+                    <div><strong>Hesap geçici olarak kilitlendi.</strong><p>@KimlikKaydi.EnFazlaHataliDeneme hatalı denemeden sonra giriş @kilitDakika dakika kapalıdır. Süre dolunca tekrar deneyin.</p></div>
+                </div>
+            }
+            else if (hatali)
+            {
+                <div class="uyari uyari--hata" role="alert">
+                    <ikon ad="warning-circle" />
+                    <div><strong>E-posta veya parola hatalı.</strong><p>Bilgileri kontrol edip tekrar deneyin. Art arda @KimlikKaydi.EnFazlaHataliDeneme hatalı denemede hesap @kilitDakika dakika kilitlenir.</p></div>
+                </div>
+            }
+            <input type="hidden" asp-for="Donus" />
+            <div class="alan">
+                <label class="form-label" asp-for="Eposta">E-posta<span class="zorunlu" aria-hidden="true">*</span></label>
+                <input asp-for="Eposta" class="form-control" type="email" autocomplete="username" required aria-describedby="Eposta-hata" />
+                <span asp-validation-for="Eposta" class="invalid-feedback" id="Eposta-hata"></span>
+            </div>
+            <div class="alan">
+                <label class="form-label" asp-for="Parola">Parola<span class="zorunlu" aria-hidden="true">*</span></label>
+                <div class="giris-grubu">
+                    <input asp-for="Parola" class="form-control" autocomplete="current-password" required aria-describedby="Parola-hata" style="padding-right:44px" />
+                    <button type="button" class="btn btn-ghost btn-sm btn-icon sonek" data-parola-goster aria-label="Parolayı göster" aria-pressed="false"><ikon ad="eye" class="ic-16" /></button>
+                </div>
+                <span asp-validation-for="Parola" class="invalid-feedback" id="Parola-hata"></span>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" asp-for="BeniHatirla" />
+                <label class="form-check-label" asp-for="BeniHatirla">Beni hatırla</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100" data-gonder-dugme>Giriş yap</button>
+            @if (ipucuParola is not null)
+            {
+                <p class="ipucu m-0">Geliştirme ortamı. Demo hesabı: <span class="mono">@eposta</span>, parola: <span class="mono">@ipucuParola</span></p>
+            }
+        </form>
+        <p class="demo-not m-0">Demo verisi, kurgusal. Gerçek müşteri bilgisi içermez.</p>
+    </div>
+    <div class="giris-panel">
+        <div class="dokusu" aria-hidden="true">@doku</div>
+        <h2>Müşteri, hesap ve işlem yönetimi.</h2>
+        <p>Aracı kurum ve banka operasyonları için örnek uygulama. Veriler Oracle'da, bakiye ve transfer kuralları PL/SQL paketlerinde çalışır.</p>
+        <div class="yigin"><span>ASP.NET Core MVC</span><span>Oracle, 19c uyumlu</span><span>PL/SQL</span><span>EF Core + Dapper</span><span>Bootstrap 5.3</span></div>
+    </div>
+</div>

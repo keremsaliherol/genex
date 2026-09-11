@@ -1,7 +1,7 @@
 # Devir notları: Hesap Masası
 
-Yeni bir oturumun kaldığı yerden devam edebilmesi için güncel durum, kararlar ve Faz 5 planı.
-Son güncelleme: 11 Eylül 2026 (Faz 4 sonu). Şifreler bu dosyada yok; yerel değerler `CLAUDE.md`'de.
+Yeni bir oturumun kaldığı yerden devam edebilmesi için güncel durum, kararlar ve Faz 5'in kalan planı.
+Son güncelleme: 11 Eylül 2026 (Faz 5, giriş adımı). Şifreler bu dosyada yok; yerel değerler `CLAUDE.md`'de.
 
 ## 1. Durum
 
@@ -12,58 +12,62 @@ Son güncelleme: 11 Eylül 2026 (Faz 4 sonu). Şifreler bu dosyada yok; yerel de
 | Ortam kurulumu | Tamam | .NET SDK 10.0.401, WSL 2.7.13, Docker Desktop, `hesap-oracle` konteyneri |
 | Faz 1: altyapı | Tamam, doğrulandı | `db/`, `MusteriHesapYonetimi.slnx`, `GET /saglik`, README |
 | Faz 2: müşteri ve hesap CRUD | Tamam, doğrulandı | Kabuk ve tema, S2-S7, S11, genel bakışın gösterge kısmı |
-| Faz 3: işlemler, dekont, ekstre, Oracle izi | Tamam, doğrulandı | S8, dekont, S9, Oracle izi paneli (tarayıcı doğrulaması Faz 4 oturumunda) |
-| Faz 4: raporlar ve grafikler | Tamam, doğrulandı | S10 (aylık özet, bakiye değişimi, en aktif), S1 grafikleri, detaylarda "Aylık özet" sekmesi, 138 test |
-| **Faz 5: giriş, testler, sunum** | **Sırada** | Bölüm 7 |
+| Faz 3: işlemler, dekont, ekstre, Oracle izi | Tamam, doğrulandı | S8, dekont, S9, Oracle izi paneli |
+| Faz 4: raporlar ve grafikler | Tamam, doğrulandı | S10, S1 grafikleri, detaylarda "Aylık özet" sekmesi, 138 test |
+| **Faz 5: giriş, testler, sunum** | **Sürüyor.** Giriş tamam ve doğrulandı; sırada entegrasyon testleri | S0, `db/05_identity.sql`; kalan plan Bölüm 7 |
 
 Depo: https://github.com/keremsaliherol/genex (`main`). Her doğrulanmış adım commit edilip push'lanır (CLAUDE.md, "Git ve GitHub").
 
-Faz 1 doğrulaması: kurulum betiği 13 sn'de temizler, kurar ve doğrular. Sonuç: 180 müşteri, 281 hesap,
-10.997 işlem, bakiye tutarsızlığı 0, hatalı transfer çifti 0, paket duman testi geçti.
+Faz 1 doğrulaması: kurulum betiği temizler, kurar ve doğrular. Sonuç: 180 müşteri, 281 hesap, 10.997 işlem,
+bakiye tutarsızlığı 0, hatalı transfer çifti 0, paket duman testi geçti.
 
 Faz 2 doğrulaması (tarayıcı paneli): Türkçe sıralama 175 adda `Intl.Collator('tr')` ile birebir; Türkçe arama ("ipek" → İpek);
 canlı filtre sayfa yenilemeden; form hataları birlikte; açılış tutarı PKG_ISLEM.YATIR ile; pasife alma kuralları.
 
 Faz 3 doğrulaması (tarayıcı paneli, konsol ve sunucu günlüğü temiz):
-- Transfer 1001-51125307-01 → 1001-30144651-01, ₺2.500: önizleme (₺224.757,58 → ₺222.257,58 ve ₺45.846,15 → ₺48.346,15),
-  onay diyaloğu, dekontta aynı referanslı iki kayıt (TRF26091190020) ve işlem sonrası bakiyeler önizlemeyle aynı.
+- Transfer 1001-51125307-01 → 1001-30144651-01, ₺2.500: önizleme, onay diyaloğu, dekontta aynı referanslı iki kayıt
+  ve işlem sonrası bakiyeler önizlemeyle aynı.
 - "Yine de gönder" ile ₺99.999.999 çekme: PKG_ISLEM ORA-20001 döndü, form "veritabanında reddedildi" gösterdi, bakiye değişmedi.
 - Hisse satımı (BIMAS 1 adet): satış listesi yalnız portföydeki hisseler, pozisyon 67 → 66, dekontta birim fiyat.
-- Ekstre (son 3 ay): dönem başı ₺152.002,90 + giriş ₺101.686,12 − çıkış ₺31.431,44 = ₺222.257,58 = son satırın yürüyen
-  bakiyesi = hesabın güncel bakiyesi. Tip filtresi özeti değiştirmez; tarih değişince dönem "Özel" olur; CSV BOM'lu,
-  noktalı virgüllü, tabloyla aynı satırlar.
-- Oracle izi (Faz 4 oturumunda, ₺1,00 yatırma 1001-55510734-02): POST isteğinin izinde sırasıyla işlem öncesi bakiye,
-  `PKG_ISLEM.YATIR` (OUT `islem_id`), işlem sonrası bakiye, trigger girdisi ("Uygulama BAKIYE'yi yazmadı",
-  ₺8.098.763,13 → ₺8.098.764,13) ve COMMIT; redirect sonrası GET'in komutları ayrı grupta.
+- Ekstre: dönem başı + giriş − çıkış = son satırın yürüyen bakiyesi = güncel bakiye; CSV BOM'lu, noktalı virgüllü.
+- Oracle izi (₺1,00 yatırma): POST isteğinin izinde bakiye önce, `PKG_ISLEM.YATIR` (OUT `islem_id`), bakiye sonra,
+  trigger girdisi ("Uygulama BAKIYE'yi yazmadı") ve COMMIT; redirect sonrası GET ayrı grupta.
 
-Faz 4 doğrulaması (tarayıcı paneli, konsol ve sunucu günlüğü temiz; her sayı sqlplus'ta ayrı sorguyla karşılaştırıldı):
-- Genel bakış: son 30 gün yatırma ₺24.197.535,21, çekme ₺7.440.174,34 (grafik lejantı ₺24,2 mn / ₺7,4 mn), 30 gün × 2 seri;
-  en aktif ilk 5 (69, 56, 35, 34, 32) doğrudan GROUP BY ile aynı; "Tablo" geçişi 30 satır, `aria-pressed` ve etiket değişir.
-- Aylık özet, 1001-55510734-02, Eylül 2026: 7 yatırma ₺997.870,50, 6 çekme ₺66.906,09, 6 giden transfer ₺112.552,03,
-  net +₺818.412,38 (prototip ekran görüntüsüyle aynı). Müşteri kapsamı (Göksu Mobilya, 2 hesap): 10 / 8 / 6 işlem,
-  net +₺1.133.705,41. İzde `PKG_RAPOR.AYLIK_OZET_*` "PL/SQL paket", `:sonuc (OUT) = REF CURSOR`, satır sayısı ve not.
-- Bakiye değişimi, aynı hesap, son 90 gün: açılış ₺3.666.127,62 (`p_acilis` OUT izde görünür), kapanış ₺8.098.763,13 =
-  güncel bakiye = paketin son satır BAKIYE'si, 165 işlem, en yüksek ₺8.197.835,79, en düşük ₺3.549.344,97; 167 grafik noktası.
-- En aktif hesaplar, tüm kayıtlar: `VW_EN_AKTIF_HESAPLAR` okunur (izde sıralama sorguda), 356 / 354 / 128 / 123 / 116 işlem.
-- CSV'ler UTF-8 BOM'lu; `/Rapor/AylikOzet/5132` biçimli bağlantı ve CSV'si de çalışır. Kayıt seçmeden "Raporu çalıştır":
-  "Listeden bir kayıt seçin.", `aria-invalid`, odak alanda. Tema değişince grafikler token'lardan yeniden kurulur
-  (açık `#2446C8`/`#B42318`, koyu `#5B78E6`/`#E66767`); renk çiftleri dataviz doğrulayıcısından geçti (CVD ΔE en az 20,4).
-- Deneme kaydından sonra veritabanı `db\kur.ps1` ile tohum veriye geri döndürüldü.
+Faz 4 doğrulaması (her sayı sqlplus'ta ayrı sorguyla karşılaştırıldı; konsol ve sunucu günlüğü temiz):
+- Genel bakış: 30 günlük yatırma ₺24.197.535,21 / çekme ₺7.440.174,34; en aktif ilk 5 doğrudan GROUP BY ile aynı.
+- Aylık özet 1001-55510734-02, Eylül 2026: net +₺818.412,38; müşteri kapsamı (Göksu Mobilya, 2 hesap) +₺1.133.705,41.
+- Bakiye değişimi, son 90 gün: açılış ₺3.666.127,62 (`p_acilis` OUT), kapanış ₺8.098.763,13 = güncel bakiye = paketin
+  son BAKIYE'si; en aktif "tüm kayıtlar" `VW_EN_AKTIF_HESAPLAR`'dan. Tema değişince grafikler token'lardan yeniden kurulur.
+
+Faz 5 giriş doğrulaması (tarayıcı paneli, sqlplus; sunucu günlüğü temiz):
+- `db\kur.ps1` 6 adımda 15 sn; `ASPNET_USERS`, `_USER_CLAIMS`, `_USER_LOGINS`, `_USER_TOKENS` ve dizinleri
+  (`UQ_ASPNET_USERS_USER_NAME`, `IDX_ASPNET_USERS_EMAIL`, FK dizinleri). Açılışta "Yönetici hesabı oluşturuldu";
+  `PASSWORD_HASH` Identity v3 biçiminde (PBKDF2, 84 karakter), `LOCKOUT_ENABLED` 1.
+- Oturumsuz: `/` → `/Giris?donus=%2F`; `/Musteri?durum=tumu` ve `/Rapor/AylikOzet/5132?kapsam=hesap` dönüş adresiyle
+  girişe; `/api/*` yönlendirme yerine 401; `/saglik`, CSS/JS ve `/Hata/404` anonim. Giriş sayfasında kabuk ve Oracle izi yok.
+- Boş gönderim: iki alanda Türkçe hata, odak e-postada; parola göster/gizle `aria-pressed`, etiket ve ikonla.
+- Var olmayan e-postayla deneme (kullanıcı yaptı): genel "E-posta veya parola hatalı." mesajı, e-posta korunur, parola boşalır.
+- Başarılı giriş (kullanıcı yaptı; Claude tarayıcıda parola girmez): `/`'ye dönüş, menüde "AD / admin" ve e-posta.
+  POST `/Giris`'in komutları Oracle izinde yok. Oturumu kapat: `/Giris` + "Oturum kapatıldı." bildirimi, sonra `/` yine
+  girişe, `/api` 401.
+- Kilitlenme (5 hatalı deneme, 5 dk) Identity yapılandırmasıyla; tarayıcıda denenmedi (parola girişi gerektirir).
 
 ## 2. Yeni oturuma başlarken
 
 1. Docker Desktop açık olmalı: `docker start hesap-oracle` (bağlantı `localhost:1521/FREEPDB1`, kullanıcı `hesap`).
 2. Oturum bir kurulumdan önce başladıysa PATH güncel değildir; tam yollar:
    `C:\Program Files\dotnet\dotnet.exe`, `C:\Program Files\Docker\Docker\resources\bin\docker.exe`.
-3. Uygulamayı çalıştırıp `http://localhost:5080` açılır; `/saglik` `gecersizNesne: 0` döndürmeli.
+3. Uygulamayı çalıştırıp `http://localhost:5080` açılır; `/saglik` `gecersizNesne: 0` döndürmeli. Sayfalar oturum ister:
+   geliştirmede giriş sayfası demo hesabını gösterir (parola user-secrets `Yonetici:Parola`, yereli `CLAUDE.md`'de).
 4. Tohum veri üretildiği güne göre hazırlanır (son 190 gün). Şu anki `03_seed.sql` 10 Eylül'e kadar; farklı bir günde
-   "bugünkü işlemler" boş, nakit akışının son günleri sıfır görünür. Demodan önce yeniden üretilip kurulur (Bölüm 3).
+   "bugünkü işlemler" boş görünür. Demodan önce yeniden üretilip kurulur (Bölüm 3).
 5. 5080'i başka bir oturumdan kalan `MusteriHesapYonetimi.Web.exe` tutuyorsa derleme DLL'leri yazamaz; o süreç durdurulur.
 
 ## 3. Komutlar
 
 ```powershell
-# Veritabanını sıfırdan kur (temizle, şema, PL/SQL, tohum veri, doğrulama). Tekrar çalıştırmak güvenli.
+# Veritabanını sıfırdan kur (temizle, şema, PL/SQL, kimlik tabloları, tohum veri, doğrulama). Tekrar çalıştırmak güvenli.
+# Kimlik tabloları da sıfırlanır: çalışan uygulama yeniden başlatılır, yönetici hesabı açılışta yeniden oluşur.
 node db/tools/tohum-uret.mjs
 $env:HESAP_DB_SIFRE = '<hesap kullanıcısının şifresi>'
 powershell -NoProfile -ExecutionPolicy Bypass -File db\kur.ps1
@@ -72,7 +76,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File db\kur.ps1
 # Yeni ikon adı kullanınca, prototip CSS'i veya Chart.js sürümü değişince; ardından Web yeniden derlenir.
 node tools/on-yuz-varliklari.mjs
 
-# Uygulama (bağlantı cümlesi user-secrets'ta hazır: ConnectionStrings:HesapMasasi)
+# Uygulama (user-secrets hazır: ConnectionStrings:HesapMasasi, Yonetici:Parola)
 dotnet run --project src/MusteriHesapYonetimi.Web --urls http://localhost:5080
 
 # Testler
@@ -96,31 +100,33 @@ node prototype/serve.mjs
 | `PaketHatalari`: ORA-200xx → form alanı (20001 → Tutar ya da Adet, 20012 → Hedef hesap, "Hedef ..." mesajı → hedef alanı) | Hata doğru alanın altında; teknik detayda ORA kodu |
 | PKG_ISLEM çağrısı Dapper ile, isimli bağlama (`p_x => :x`), transaction .NET'te (`OracleTransaction`); hata olursa ROLLBACK | Paketler COMMIT etmez; transferin iki kaydı birlikte yazılır ya da hiçbiri |
 | Dekonttaki işlem sonrası bakiye: güncel bakiye − sonraki hareketlerin işaretli toplamı | Ek kolon gerekmez; trigger kuralıyla aynı işaret |
-| Ekstre Dapper ile: dönem başı bakiye `NVL(SUM(...))`, yürüyen bakiye `SUM() OVER (ORDER BY ISLEM_TARIHI, ISLEM_ID)`; tarih koşulu aralık (`>= :bas AND < :bit_ertesi`) | IDX_ISLEM_HESAP_TARIH kullanılır; tip filtresi yalnız gösterilen satırları daraltır, özet tüm hareketlerden |
+| Ekstre Dapper ile: dönem başı bakiye `NVL(SUM(...))`, yürüyen bakiye `SUM() OVER (ORDER BY ISLEM_TARIHI, ISLEM_ID)`; tarih koşulu aralık | IDX_ISLEM_HESAP_TARIH kullanılır; tip filtresi yalnız gösterilen satırları daraltır |
 | CSV: `;` ayırıcı, UTF-8 BOM, tr-TR ondalık virgül; serbest metin `=+-@` ile başlıyorsa önüne `'` (`CsvDosyasi`) | Türkçe Excel doğrudan açar; formül enjeksiyonu önlenir |
-| **Oracle izi:** her sayfa isteğine `AsyncLocal` iz bağlamı (middleware, çerezle tarayıcı); EF Core komutları tek bir `DbCommandInterceptor`'dan, Dapper komutları `IzliDapper`'dan geçer; tarayıcı başına son 40 komut bellekte; panel `OracleIzi` ViewComponent | Controller ve servisler izden habersiz; POST → Redirect → GET'te kaydetme komutları da görünür; `/api` ve statik dosyalar izlenmez |
-| İzde başlık EF Core `TagWith` etiketinden ("-- Müşteri listesi (sayfa)"); yoksa paket adı veya fiil + tablolar; `QueryIzliAsync` isteğe bağlı not alır | Etiket SQL'in içinde de görünür; not paket gövdesinin ne yaptığını anlatır |
+| **Oracle izi:** her sayfa isteğine `AsyncLocal` iz bağlamı (middleware, çerezle tarayıcı); EF Core komutları `DbCommandInterceptor`'dan, Dapper komutları `IzliDapper`'dan geçer; tarayıcı başına son 40 komut bellekte | Controller ve servisler izden habersiz; POST → Redirect → GET'te kaydetme komutları da görünür |
+| İzde başlık EF Core `TagWith` etiketinden; yoksa paket adı veya fiil + tablolar; `QueryIzliAsync` isteğe bağlı not alır | Etiket SQL'in içinde de görünür; not paket gövdesinin ne yaptığını anlatır |
 | İşlemde iz açıksa bakiye çağrıdan önce ve sonra okunur, trigger'ın etkisi, COMMIT veya ROLLBACK ayrı girdi olarak yazılır | Trigger'ın UPDATE'i istemciye görünmez; panel "uygulama BAKIYE'yi yazmadı" gösterir |
-| Oracle izi varsayılan yalnız Development'ta (`OracleIzi:Acik`); SQL renklendirme sunucuda (`SqlRenklendirici`) | Üretimde bind değerleri gösterilmez; panel JS'siz de okunur |
-| **Raporlar:** PKG_RAPOR Dapper ile `BEGIN PKG_RAPOR.X(p_a => :a, ..., p_sonuc => :sonuc); END;`; `OracleParametreleri.RefCursor` çıktısı ODP.NET'te komutun sonuç kümesi olarak döner, Dapper sıradan SELECT gibi okur | Şartname 5.2 ve Faz 4: stored procedure + REF CURSOR, .NET'te Dapper |
-| REF CURSOR satırları kolon adlarıyla aynı büyük harfli özellikli özel sınıflara (`ISLEM_TIPI`, `TOPLAM_TUTAR`) okunur; tip kodu `VeritabaniKodu` ile enum'a | Paket sorgusunun kolonları çağıranda yeniden adlandırılamaz; global Dapper ayarı (`MatchNamesWithUnderscores`) değiştirilmez |
-| `BAKIYE_DEGISIMI`: dönem başı `p_acilis` OUT (çağrıdan sonra `Oku<decimal>`), yürüyen bakiye paket içinde `SUM() OVER`; özet (kapanış, en yüksek/düşük) `BakiyeDegisimOzeti.Hesapla` ile trigger kuralından yeniden hesaplanır | İki bağımsız hesap aynı çıkmalı: kapanış = paketin son BAKIYE'si = güncel bakiye (doğrulandı) |
-| En aktif: dönemli raporda `PKG_RAPOR.EN_AKTIF`, "tüm kayıtlar"da şartnamedeki `VW_EN_AKTIF_*` view'ları (sıralama ve `FETCH FIRST :adet` sorguda); ad/no/tip bilgisi ikinci bir EF sorgusuyla (`IN` listesi) | View tarih süzgeci almaz; iki yol da izde görünür. Genel bakıştaki "son 30 gün, ilk 5" `EN_AKTIF` ile |
-| Aylık özet satırları ekranda işlem tipi sırasıyla (paket ISLEM_TIPI koduna göre sıralar); net etki `AylikOzetHesabi.NetEtki` | Prototip ve ekran görüntüsüyle aynı sıra; kural testli |
-| Rapor filtreleri `[FromQuery]` olmadan bağlanır (route veya sorgu); CSV bağlantıları açık değerlerle kurulur | `Url.Action(..., new { id })` id'yi yola koyar (`/Rapor/AylikOzet/5132`); `[FromQuery]` ile rapor boş açılıyordu |
-| Genel bakış nakit akışı: `TRUNC(ISLEM_TARIHI)` yalnız gruplamada, süzgeç `>= :bas` (IDX_ISLEM_TARIH); eksik günler `NakitAkisi.Doldur` ile sıfır | Veritabanı yalnız hareketli günleri döndürür; grafik 30 gün sabit |
-| **Grafikler:** Chart.js 4.4.1 `wwwroot/lib/chart.js`'te (prototipin npm paketinden kopyalanır), yalnız `ViewData["Grafik"] = true` olan sayfalarda yüklenir; veri canvas'ın `data-veri` özniteliğinde JSON (`Json.Serialize`, tutarlar TL); `grafik.js` prototipin `charts.js`'i | Sunucu çizer, JS yalnız iyileştirir; CDN bağımlılığı yok |
-| Grafik renkleri `--viz-*` token'larından okunur; `uygulama.js` tema değişince `hm:tema` olayı yayar, grafikler yeniden kurulur. Her grafiğin tablo karşılığı var (`data-tablo-gorunum`); JS kapalıyken ve yazdırmada tablo görünür | dataviz kuralları: tek eksen, ince işaret, metin veri rengini giymez, tablo alternatifi |
+| Oracle izi varsayılan yalnız Development'ta (`OracleIzi:Acik`); SQL renklendirme sunucuda | Üretimde bind değerleri gösterilmez |
+| **Raporlar:** PKG_RAPOR Dapper ile; `OracleParametreleri.RefCursor` çıktısı ODP.NET'te komutun sonuç kümesi olarak döner | Şartname 5.2 ve Faz 4: stored procedure + REF CURSOR, .NET'te Dapper |
+| REF CURSOR satırları kolon adlarıyla aynı büyük harfli özellikli özel sınıflara okunur | Paket sorgusunun kolonları çağıranda yeniden adlandırılamaz; global Dapper ayarı değiştirilmez |
+| `BAKIYE_DEGISIMI`: `p_acilis` OUT, yürüyen bakiye paket içinde; özet `BakiyeDegisimOzeti.Hesapla` ile yeniden hesaplanır | İki bağımsız hesap aynı çıkmalı: kapanış = paketin son BAKIYE'si = güncel bakiye |
+| En aktif: dönemli raporda `PKG_RAPOR.EN_AKTIF`, "tüm kayıtlar"da `VW_EN_AKTIF_*` (sıralama sorguda); genel bakışta son 30 gün, ilk 5 | View tarih süzgeci almaz; iki yol da izde görünür |
+| Rapor filtreleri `[FromQuery]` olmadan bağlanır (route veya sorgu); CSV bağlantıları açık değerlerle | `Url.Action(..., new { id })` id'yi yola koyar |
+| **Grafikler:** Chart.js 4.4.1 `wwwroot/lib/chart.js`'te, yalnız `ViewData["Grafik"] = true` sayfalarında; veri `data-veri` JSON; renkler `--viz-*` token'larından, `hm:tema` olayında yeniden kurulur; her grafiğin tablo karşılığı | Sunucu çizer, JS yalnız iyileştirir; CDN yok; dataviz kuralları |
+| **Oturum:** ASP.NET Core Identity (`AddIdentityCore` + `SignInManager` + Identity çerezleri), tek yönetici, rol yok (`IdentityUserContext`). Tüm uç noktalar `FallbackPolicy` ile oturum ister; `/Giris`, `/Hata`, statik dosyalar (`MapStaticAssets().AllowAnonymous()`) ve `/saglik` anonim | Controller'lara tek tek `[Authorize]` yazılmaz; yeni eklenen uç nokta unutulsa da korunur |
+| Kimlik tabloları `db/05_identity.sql` ile; DDL `KimlikDbContext` modelinden EF'nin `GenerateCreateScript()` çıktısı (scratch konsol projesi, Bölüm 9). Bağlam adları tırnaksız büyük harfe eşler (`ASPNET_USERS`, `NORMALIZED_USER_NAME`), metinler VARCHAR2, bayraklar NUMBER(1) + CHECK | Şema betiklerle yönetilir, migration yok; model ile DDL aynı kaynaktan. .NET 10 şema sürümleri bu bağlamda aynı 4 tabloyu üretir (passkey tablosu yok) |
+| Yönetici hesabı açılışta yoksa oluşturulur (`Yonetici:Eposta`, varsayılan `admin@hesapmasasi.local`; `Yonetici:Parola` user-secrets/ortam değişkeni). Veritabanı hazır değilse uygulama yine açılır, neden günlüğe yazılır | Parola koda ve depoya girmez; `kur.ps1` sıfırlamasından sonra hesap kendiliğinden döner |
+| Kilitlenme 5 hatalı deneme / 5 dk; hata mesajı genel, kalan deneme sayısı gösterilmez; parola en az 10 karakter + Identity karakter kuralları | Hesap varlığı ele verilmez (kullanıcı adı taraması yapılamaz) |
+| Çerez `hm-oturum` (HttpOnly, SameSite=Lax, 8 saat kayan); dönüş parametresi `donus` (`Url.IsLocalUrl`); `/api` isteklerinde yönlendirme yerine 401; çıkış POST + antiforgery | fetch giriş sayfasını JSON diye okumaz; açık yönlendirme ve CSRF'ye karşı |
+| `KimlikDbContext` Oracle izine bağlanmaz | Bind değerlerinde parola özeti ve güvenlik damgası görünürdü |
+| Giriş sayfası kabuksuz (`_YalinLayout`; iki layout'un ortak `<head>`'i `_BasEtiketleri`). Paneldeki ekstre dokusu sabit tohumlu kurgusal satırlar, hesap no maskeli; demo hesabı ipucu yalnız Development'ta ve parola ayardan okunur | Anonim sayfa veritabanından veri göstermez |
 | Hesap açma tek transaction: `MUSTERI ... FOR UPDATE` (EF `FromSql`) → EF insert → Dapper `PKG_ISLEM.YATIR` → COMMIT | Aynı müşteriye eşzamanlı iki açılış aynı EK_NO'yu alamaz |
 | Türkçe sıralama ve arama: `NLSSORT(..., 'NLS_SORT=XTURKISH')` ve `NLS_UPPER` EF `DbFunction` eşlemesiyle | Oturum ayarı havuzdaki bağlantıda durum taşır; bu yol SQL'de görünür |
-| Tutar alanları metin olarak bağlanır, `TutarMetni` ayrıştırır; istemcide aynı kural, tutarlar kuruş | tr-TR model bağlayıcı "8140.25"i 814025 okur; kayan nokta hatası yok |
-| Hesabı olan müşterinin numarası değiştirilemez | Hesap numarası müşteri numarasını içerir |
-| Pasife alma kuralları Application'da; `CK_HESAP_PASIF_BAKIYE` son güvence | Prototipteki -20004/-20005/-20007 veritabanı kodu değil |
-| Liste filtreleri GET sorgu dizesinde; JS varken `fetch` + `DOMParser` ile liste ve Oracle izi paneli yenilenir. Dönem formları (ekstre, bakiye değişimi) `data-donem-form`, kendiliğinden gönderilen süzgeçler `data-oto-gonder` | Adres paylaşılabilir, geri tuşu çalışır, JS kapalıyken de form çalışır |
-| İkonlar harici sprite, `theme.css` prototipten üretilir (`tools/on-yuz-varliklari.mjs`) | Prototip ile uygulama aynı token'lar; yalnız kullanılan ikonlar |
-| POST → Redirect → GET, TempData bildirimi; antiforgery tüm POST'larda; `donus` adresi `Url.IsLocalUrl` ile | Yenilemede tekrar gönderim yok; CSRF ve açık yönlendirmeye karşı |
-| 19c uyumluluğu; enum ↔ veritabanı kodu (`VeritabaniKodu`); `bool` ↔ `NUMBER(1)` sağlayıcı eşlemesi | Geliştirme veritabanı 26ai, hedef 19c |
-| Kimlik kolonları `BY DEFAULT ON NULL`; bağlantı cümlesi user-secrets'ta; HTTPS kapalı; `.slnx` | Faz 1 kararları |
+| Tutar alanları metin olarak bağlanır, `TutarMetni` ayrıştırır; istemcide aynı kural, tutarlar kuruş | tr-TR model bağlayıcı "8140.25"i 814025 okur |
+| Hesabı olan müşterinin numarası değiştirilemez; pasife alma kuralları Application'da, `CK_HESAP_PASIF_BAKIYE` son güvence | Hesap numarası müşteri numarasını içerir |
+| Liste filtreleri GET sorgu dizesinde; JS varken `fetch` + `DOMParser` ile liste ve Oracle izi paneli yenilenir; dönem formları `data-donem-form`, kendiliğinden gönderilen süzgeçler `data-oto-gonder` | Adres paylaşılabilir, geri tuşu çalışır, JS kapalıyken de form çalışır |
+| İkonlar harici sprite, `theme.css` prototipten üretilir (`tools/on-yuz-varliklari.mjs`) | Prototip ile uygulama aynı token'lar |
+| POST → Redirect → GET, TempData bildirimi; antiforgery tüm POST'larda | Yenilemede tekrar gönderim yok; CSRF'ye karşı |
+| 19c uyumluluğu; enum ↔ veritabanı kodu (`VeritabaniKodu`); `bool` ↔ `NUMBER(1)`; kimlik kolonları `BY DEFAULT ON NULL`; HTTPS kapalı; `.slnx` | Geliştirme veritabanı 26ai, hedef 19c |
 
 ## 5. Veritabanı
 
@@ -129,9 +135,11 @@ node prototype/serve.mjs
 `CK_HESAP_BAKIYE` (≥ 0), `CK_HESAP_PASIF_BAKIYE` (pasif hesabın bakiyesi 0), `CK_ISLEM_TRANSFER`, `CK_ISLEM_HISSE`.
 İndeksler: `IDX_ISLEM_HESAP_TARIH` (ekstre), `IDX_ISLEM_TARIH`, `IDX_ISLEM_REFERANS` ve FK indeksleri.
 
+**Kimlik tabloları** (`05_identity.sql`): `ASPNET_USERS` (`UQ_ASPNET_USERS_USER_NAME`, `IDX_ASPNET_USERS_EMAIL`,
+`CK_ASPNET_USERS_BAYRAK`), `ASPNET_USER_CLAIMS`, `ASPNET_USER_LOGINS`, `ASPNET_USER_TOKENS` (FK'ler ON DELETE CASCADE).
+
 **Trigger'lar:** `TRG_ISLEM_BAKIYE_GUNCELLE` (şartname 5.1), `TRG_ISLEM_DEGISMEZ` (ISLEM'de UPDATE/DELETE yasak).
-**View'lar:** `VW_EN_AKTIF_MUSTERILER`, `VW_EN_AKTIF_HESAPLAR` (ORDER BY view'da değil sorguda), `VW_PORTFOY`
-(EF'te anahtarsız `PortfoyPozisyonu`).
+**View'lar:** `VW_EN_AKTIF_MUSTERILER`, `VW_EN_AKTIF_HESAPLAR` (ORDER BY view'da değil sorguda), `VW_PORTFOY`.
 **Sekans:** `SEQ_REFERANS` (90000'den; referans `TRF` + YYAAGG + 5 hane).
 
 **Paketler:**
@@ -172,48 +180,43 @@ Demo için kullanışlı kayıtlar: Göksu Mobilya Ltd. Şti. (müşteri 88, hes
 
 | Dosya | İçerik |
 |---|---|
-| `db/01_schema.sql` … `04_dogrula.sql`, `99_temizle.sql`, `00_kur.sql`, `kur.ps1` | Şema, PL/SQL, tohum, doğrulama, silme, kurulum |
+| `db/01_schema.sql` … `05_identity.sql`, `99_temizle.sql`, `00_kur.sql`, `kur.ps1` | Şema, PL/SQL, tohum, doğrulama, kimlik tabloları, silme, kurulum |
 | `db/tools/tohum-uret.mjs` | `prototype/src/data.js`'i Node'da çalıştırıp `03_seed.sql` üretir |
 | `tools/on-yuz-varliklari.mjs` | `wwwroot/css/theme.css`, `wwwroot/icons/sprite.svg`, `wwwroot/lib/chart.js` üretimi, em/en dash kontrolü |
 | `src/…Domain/` | Enum'lar, `VeritabaniKodu`, `BakiyeEtkisi`, `HesapNumarasi`; varlıklar |
 | `src/…Application/Ortak/` | `Sonuc`/`AlanHatasi`, `SayfaSonucu`, `TurkceBicim`, `TutarMetni`, `IslemSatiri`, `Csv` |
 | `src/…Application/Musteriler/`, `Hesaplar/`, `Ozet/` | Müşteri, hesap, genel bakış sözleşmeleri ve kuralları; `BakiyeGecmisi`, `PortfoyPozisyonu`, `NakitAkisi` |
-| `src/…Application/Islemler/` | `IIslemServisi`, `IslemKaydi`, `IslemKurallari`, `PaketHatalari`, `Ekstre` (`IEkstreSorgusu`, `EkstreDonemleri`, `EkstreOzeti`) |
-| `src/…Application/Raporlar/` | `IRaporSorgusu`, filtreler, `AylikOzet`, `BakiyeDegisimi` (+ `GrafikNoktalari`), `BakiyeDegisimOzeti`, `EnAktifSatir`, `RaporDonemleri` |
-| `src/…Data/Musteriler/`, `Hesaplar/`, `Ozet/` | EF Core gerçeklemeleri (`TagWith` etiketli); genel bakışta nakit akışı Dapper ile |
-| `src/…Data/Islemler/` | `IslemServisi` (Dapper + OracleTransaction, PKG_ISLEM; dekont EF), `EkstreSorgusu` (SUM() OVER) |
-| `src/…Data/Raporlar/RaporSorgusu.cs` | PKG_RAPOR REF CURSOR çağrıları, `VW_EN_AKTIF_*` sorguları |
+| `src/…Application/Islemler/` | `IIslemServisi`, `IslemKaydi`, `IslemKurallari`, `PaketHatalari`, `Ekstre` |
+| `src/…Application/Raporlar/` | `IRaporSorgusu`, filtreler, `AylikOzet`, `BakiyeDegisimi`, `BakiyeDegisimOzeti`, `EnAktifSatir`, `RaporDonemleri` |
+| `src/…Data/Musteriler/`, `Hesaplar/`, `Ozet/`, `Islemler/`, `Raporlar/` | EF Core ve Dapper gerçeklemeleri (PKG_ISLEM, PKG_RAPOR, ekstre) |
+| `src/…Data/Kimlik/KimlikDbContext.cs` | Identity deposu, büyük harfli tablo/kolon eşlemesi |
 | `src/…Data/Izleme/` | `OracleIzBaglami` (AsyncLocal), `OracleIzDeposu`, `EfIzInterceptor`, `IzliDapper`, `IzBasligi` |
 | `src/…Data/OracleFonksiyonlari.cs`, `OracleHatalari.cs`, `SorguYardimcilari.cs`, `OracleAltyapi.cs` | NLSSORT/NLS_UPPER; ORA hata yorumu; sıralama/sayfalama; bağlantı ve `OracleParametreleri` |
-| `src/…Web/Program.cs` | Bağlantı kontrolü, MVC, tr-TR, durum sayfaları, Oracle izi (`UseOracleIzi`), `/saglik`, API |
-| `src/…Web/Controllers/` | `Home`, `Musteri`, `Hesap` (+ `Ekstre`, `EkstreCsv`), `Islem` (`Yeni`, `Dekont`), `Rapor` (`AylikOzet`, `BakiyeDegisimi`, `EnAktif` + CSV'leri), `Hata` |
-| `src/…Web/Api/` | `AramaUclari` (`/api/ara`, `/api/musteri/*`, `/api/hesap/ara`, `/api/hesap/{id}/islem`), `IslemApi` |
-| `src/…Web/Altyapi/` | `SorguDizesi`, `Etiketler`, `WebUzantilari`, `OracleIzUzantilari`, `SqlRenklendirici`, `CsvDosyasi` |
+| `src/…Web/Program.cs` | Bağlantı kontrolü, MVC, tr-TR, durum sayfaları, Oracle izi, kimlik (`AddKimlik`, `UseAuthentication`), `/saglik`, API, yönetici tohumu |
+| `src/…Web/Controllers/` | `Home`, `Musteri`, `Hesap` (+ ekstre), `Islem`, `Rapor`, `Giris` (`/Giris`, `/Cikis`), `Hata` |
+| `src/…Web/Api/` | `AramaUclari`, `IslemApi` |
+| `src/…Web/Altyapi/` | `SorguDizesi`, `Etiketler`, `WebUzantilari`, `OracleIzUzantilari`, `SqlRenklendirici`, `CsvDosyasi`, `KimlikKaydi` |
 | `src/…Web/TagHelpers/`, `ViewComponents/` | `<ikon>`, `<tutar>`, rozetler, `<kimlik>`, `<th sirala>`; `OracleIziViewComponent` |
-| `src/…Web/Views/` | Shared (`_Layout`, `_Sayfalama`, `_Bos`, `_HataOzeti`, `_BakiyeCizgisi`, `_AylikOzetTablo`, `Components/OracleIzi`), Musteri, Hesap (+ `Ekstre`, `EkstreSec`), Islem (`Yeni`, `Dekont`), Rapor (`_RaporBasi`, `AylikOzet`, `BakiyeDegisimi`, `EnAktif`), Home, Hata |
-| `src/…Web/wwwroot/` | `css/theme.css` (üretilir), `css/uygulama.css`, `js/uygulama.js`, `js/grafik.js`, `icons/sprite.svg` (üretilir), `lib/chart.js` (üretilir) |
+| `src/…Web/Views/` | Shared (`_Layout`, `_YalinLayout`, `_BasEtiketleri`, `_Sayfalama`, `_Bos`, `_AylikOzetTablo`, ...), Musteri, Hesap, Islem, Rapor, Giris, Home, Hata |
+| `src/…Web/wwwroot/` | `css/theme.css` (üretilir), `css/uygulama.css`, `js/uygulama.js`, `js/grafik.js`, `icons/sprite.svg` ve `lib/chart.js` (üretilir) |
 | `tests/…/` | `DomainKurallariTestleri` (18), `UygulamaKurallariTestleri` (64), `IslemKurallariTestleri` (17), `EkstreTestleri` (12), `RaporTestleri` (27); toplam 138 |
 
-## 7. Faz 5 planı: giriş, testler, sunum
+## 7. Faz 5'in kalan planı
 
-Kapsam: arayüz planı S0 (giriş), şartnamedeki kimlik doğrulama, sunum malzemesi. Hedef görünüm: `docs/ekran/07-giris.png`,
-prototipte `prototype/src/views/genel.js` (`V.giris`).
+Tamamlanan: Identity (tek yönetici, kilitlenme), kimlik tabloları SQL betiğiyle, S0 giriş ekranı, oturumu kapat.
 
-1. **Identity (tek admin):** ASP.NET Core Identity, cookie oturumu; tüm controller'lar `[Authorize]` (global filtre),
-   `/Giris` ve `/saglik` anonim. Demo hesabı `admin@hesapmasasi.local` ilk çalıştırmada tohumlanır; parola koda yazılmaz
-   (user-secrets, `Yonetici:Parola`). 5 hatalı denemede 5 dk kilit (Identity lockout), "Beni hatırla".
-2. **Identity tabloları:** açık karar (Bölüm 10). Öneri: şema SQL betikleriyle yönetildiği için `db/05_identity.sql`
-   (EF'nin ürettiği DDL'den, 19c uyumlu, `AspNet*` tabloları) ve `99_temizle.sql`'e silme satırları; EF migration kullanılmaz.
-3. **Giriş ekranı:** prototipteki iki kolonlu düzen (form + koyu kobalt panel, mono ekstre dokusu), hata ve kilit mesajları,
-   gönderimde kilitli düğme. Üst çubuktaki kullanıcı menüsüne "Oturumu kapat" (POST + antiforgery).
-4. **Testler:** Oracle'a bağlanan entegrasyon testleri ayrı projede ve bağlantı yoksa atlanır: PKG_ISLEM hata kodları,
-   transfer atomikliği, rapor sonuçlarının ekstreyle tutarlılığı (Faz 4'teki elle karşılaştırmaların otomatiği).
-5. **Sunum:** tohum veriyi demo gününe göre yeniden üret ve kur; README'ye gerçek uygulamadan ekran görüntüleri
-   (genel bakış, işlem + Oracle izi, aylık özet, bakiye değişimi); 1-2 dk demo kaydı. Geist fontları `wwwroot/fonts` altına.
+1. **Entegrasyon testleri (sırada):** ayrı proje `tests/MusteriHesapYonetimi.EntegrasyonTestleri` (Data'ya bağlı). Bağlantı
+   Web projesinin user-secrets'ından ya da `ConnectionStrings__HesapMasasi` ortam değişkeninden; tanımlı değilse testler
+   atlanır. Veriyi değiştirmeyen senaryolar: PKG_ISLEM ret kodlarının form alanına eşlenmesi ve reddedilen işlemin kayıt
+   yazmaması (bakiye ve ISLEM sayısı aynı), rapor tutarlılığı (aylık özet net etkisi = ekstre giriş − çıkış; bakiye değişimi
+   kapanışı = HESAP.BAKIYE; `EN_AKTIF` ile `VW_EN_AKTIF_*` aynı sıra), EF modellerinin tablo ve kolonlarla uyumu
+   (HesapMasasiDbContext ve KimlikDbContext).
+2. **Sunum:** Geist fontları `wwwroot/fonts` altına (Google Fonts bağımlılığı kalkar); tohum veriyi demo gününe göre yeniden
+   üret ve kur; README'ye gerçek uygulamadan ekran görüntüleri; 1-2 dk demo senaryosu (kaydı kullanıcı yapar).
 
 ## 8. Sonraki adımlar (Faz 5 sonrası)
 
-- HTTPS ve üretim yapılandırması (ortam değişkeninden bağlantı cümlesi, `OracleIzi:Acik=false`).
+- HTTPS ve üretim yapılandırması (ortam değişkeninden bağlantı cümlesi ve yönetici parolası, `OracleIzi:Acik=false`).
 - Genex şartnamesinin açık depoya konup konmayacağı kullanıcının kararı.
 
 ## 9. Bilinen tuzaklar
@@ -225,35 +228,36 @@ prototipte `prototype/src/views/genel.js` (`V.giris`).
 - CHECK kısıtı UNKNOWN sonucu kabul eder; NULL kontrolleri açıkça yazılır.
 - Windows PowerShell 5.1 BOM'suz `.ps1` dosyasını ANSI okur; `.ps1` dosyaları BOM'lu UTF-8 kaydedilir.
 - Claude ortamı, aynı PowerShell komutunda hem `Remove-Item` hem `C:\Program Files` yolu geçerse komutu engeller.
-- `dotnet run` kod değişikliğini almaz; sunucu yeniden başlatılır. Çalışan sunucu `bin/` DLL'lerini kilitler, aynı anda
-  iki build ortak `obj/` klasörlerinde çakışır. `wwwroot` dosyaları ise diskten anında sunulur.
+- `dotnet run` kod değişikliğini almaz; sunucu yeniden başlatılır. Çalışan sunucu `bin/` DLL'lerini kilitler. Razor görünümleri
+  de derlenir (runtime compilation yok): görünüm değişikliği için de yeniden başlatma; açık sekme ayrıca yenilenir.
 - `MapStaticAssets` statik dosya listesini derlemede çıkarır: `tools/on-yuz-varliklari.mjs` derlemeden önce çalıştırılır.
 - Razor, enum tipli TagHelper özelliğinde tip adını kendisi ekler: `sirala-ilk="Azalan"` yazılır.
-- tr-TR'de `ToUpper()` "i"yi "İ" yapar; veritabanı kodlarında `ToUpperInvariant()`. SVG yolu, CSS genişliği gibi makine
-  metninde sayı `CultureInfo.InvariantCulture` ile yazılır.
+- tr-TR'de `ToUpper()` "i"yi "İ" yapar; veritabanı kodlarında `ToUpperInvariant()`. Makine metninde sayı `InvariantCulture`.
 - Dapper + ODP.NET: `OracleParametreleri` kullanılmazsa parametreler sıraya göre bağlanır (BindByName kapalı).
-- `Url.Action(..., new { id })` varsayılan route'ta id'yi yola koyar; `[FromQuery]` ile bağlanan filtre onu görmez.
-  Aynı nedenle `Url.Action("X") + Request.QueryString` yoldaki id'yi kaybeder: bağlantılar açık değerlerle kurulur.
-- Controller'da eylem adı bir tiple aynıysa (`AylikOzet`, `BakiyeDegisimi`) eylem gövdesinde o tip adı yazılamaz
-  (ad eylemi gösterir); `var` kullanılır.
-- JS'te "2026-08-13" gibi saatsiz ISO tarih UTC okunur; sunucu tarihleri `ToString("s")` ile saatli gönderilir (yerel okunur).
+- `Url.Action(..., new { id })` id'yi yola koyar; `[FromQuery]` ile bağlanan filtre onu görmez; `Url.Action("X") + QueryString`
+  yoldaki id'yi kaybeder.
+- Controller'da eylem adı bir tiple aynıysa (`AylikOzet`) eylem gövdesinde o tip adı yazılamaz; `var` kullanılır.
+- JS'te saatsiz ISO tarih UTC okunur; sunucu tarihleri `ToString("s")` ile saatli gönderilir.
+- **Oturum ve doğrulama:** Claude, güvenlik kuralı gereği tarayıcıda parola girmez. Başarılı giriş gerektiren tarayıcı
+  kontrollerinde kullanıcı panelde oturum açar; Claude "Oturumu kapat"ı denerse yeniden giriş gerekir.
+- `FallbackPolicy` statik dosyaları da korur: `MapStaticAssets().AllowAnonymous()` olmadan giriş sayfası stilsiz açılır.
+- `db\kur.ps1` kimlik tablolarını da siler: çalışan uygulama yeniden başlatılmazsa yönetici hesabı olmaz, giriş yapılamaz.
+- Kimlik DDL'ini yeniden üretmek için: scratchpad'de Data projesine referanslı bir konsol projesi `AddDbContext<KimlikDbContext>`
+  (Oracle, 19c uyumluluk) ve `AddIdentityCore<IdentityUser>().AddEntityFrameworkStores<KimlikDbContext>()` kaydeder,
+  `db.Database.GenerateCreateScript()` yazdırır (bağlanmaz). Çıktı `05_identity.sql`'deki adlandırmaya çevrilir.
 - Tarayıcı panelinin sistem teması koyu: tema denemesinde açık tema elle seçilir, sonra "Sistem"e dönülür.
 - Tarayıcı paneli, sayfa kaydırılmışken ekran görüntüsünün üstünde boş bir bant gösterebilir; panel gizliyken ekran
   görüntüsü alınamaz. Ölçüm için JS kullanılır.
 - Proje OneDrive altında: `bin/`, `obj/`, `node_modules/` senkronize olur, dosya kilidi görülebilir.
-- Windows Akıllı Uygulama Denetimi açık (`HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy`,
-  `VerifiedAndReputablePolicyState = 1`). İmzasız ve itibarı olmayan yeni derlenmiş bir DLL'i engelleyebilir: sunucu
-  "Uygulama Denetimi ilkesi bu dosyayı engelledi (0x800711C7)" ile birkaç saniyede kapanır, tarayıcı paneli yine
-  "başladı" der. Kayıt: Olay Görüntüleyicisi, Microsoft-Windows-CodeIntegrity/Operational, olay 3077/3033. Faz 3'ün son
-  derlemesi engellendi, Faz 4'ün derlemeleri engellenmedi; karar derleme çıktısına göre değişiyor. Sunucu başladıktan sonra
-  `preview_logs` ile "Now listening" satırı ve ilk istek kontrol edilir.
+- Windows Akıllı Uygulama Denetimi açık (`VerifiedAndReputablePolicyState = 1`). İmzasız yeni derlenmiş bir DLL'i
+  engelleyebilir: sunucu "Uygulama Denetimi ilkesi bu dosyayı engelledi (0x800711C7)" ile kapanır, tarayıcı paneli yine
+  "başladı" der (CodeIntegrity olay 3077/3033). Faz 3'ün son derlemesi engellendi, Faz 4 ve Faz 5 derlemeleri (scratch konsol
+  dahil) engellenmedi. Sunucu başladıktan sonra `preview_logs` ile ilk istek kontrol edilir.
 
 ## 10. Açık konular
 
-- Akıllı Uygulama Denetimi yeniden engellerse seçenekler kullanıcının: Denetimi Windows Güvenliği > Uygulama ve tarayıcı
-  denetimi'nden kapatmak (kapatıldıktan sonra yeniden açmak Windows'u sıfırlamayı gerektirebilir), uygulamayı Docker/WSL
-  içinde çalıştırmak ya da sonraki derlemede tekrar denemek. Sistem güvenlik ayarı Claude tarafından değiştirilmez.
+- Akıllı Uygulama Denetimi yeniden engellerse seçenekler kullanıcının (Denetimi kapatmak, uygulamayı Docker/WSL içinde
+  çalıştırmak ya da sonraki derlemede tekrar denemek). Sistem güvenlik ayarı Claude tarafından değiştirilmez.
 - Genex şartnamesi (`musteri_hesap_yonetim_proje_speq.md`) açık depoya konma izni netleşene kadar `.gitignore`'da.
-- Fontlar şimdilik Google Fonts'tan (sistem fontu yedeğiyle); self-host Faz 5'te.
-- Identity tabloları SQL betiğiyle mi, EF migration ile mi (Faz 5; öneri Bölüm 7).
+- Fontlar şimdilik Google Fonts'tan (sistem fontu yedeğiyle); self-host Faz 5'in sunum adımında.
 - HTTPS gerekirse eklenecek.

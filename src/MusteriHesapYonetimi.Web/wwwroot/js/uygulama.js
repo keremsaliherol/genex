@@ -285,6 +285,25 @@
     tel?.addEventListener('blur', () => { if (tel.value) tel.value = telefonBicimle(tel.value); });
   }
 
+  /* Giriş: parolayı göster/gizle; gönderimde düğme kilitlenir (çift gönderim olmaz) */
+  const girisFormu = $('form[data-giris-formu]');
+  if (girisFormu) {
+    const eposta = $('#Eposta', girisFormu); const parola = $('#Parola', girisFormu);
+    $('[data-parola-goster]', girisFormu).addEventListener('click', (ev) => {
+      const b = ev.currentTarget; const goster = parola.type === 'password';
+      parola.type = goster ? 'text' : 'password';
+      b.setAttribute('aria-pressed', String(goster));
+      b.setAttribute('aria-label', goster ? 'Parolayı gizle' : 'Parolayı göster');
+      b.innerHTML = ikon(goster ? 'eye-slash' : 'eye', 'ic-16');
+    });
+    girisFormu.addEventListener('submit', () => {
+      const d = $('[data-gonder-dugme]', girisFormu);
+      d.disabled = true;
+      d.innerHTML = '<span class="yukleniyor-nokta" aria-hidden="true"></span>Kontrol ediliyor';
+    });
+    if (!$('.input-validation-error', girisFormu)) (eposta.value ? parola : eposta).focus();
+  }
+
   /* Kaydedilmemiş değişiklikle sayfadan ayrılma uyarısı */
   $$('form[data-kirli-uyari]').forEach((f) => {
     let kirli = false; let gonderildi = false;

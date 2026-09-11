@@ -1,0 +1,19 @@
+@* İki layout'un ortak <head> içeriği: tema betiği, yazı tipleri ve stiller. *@
+<script>
+    // Tema tercihi boyamadan önce uygulanır; açık ve koyu arasında yanıp sönme olmaz.
+    (function () {
+        var r = document.documentElement, t = null;
+        r.classList.add('js');
+        try { t = localStorage.getItem('hm-tema'); } catch (e) { t = null; }
+        if (t === 'acik') r.setAttribute('data-theme', 'light');
+        else if (t === 'koyu') r.setAttribute('data-theme', 'dark');
+        var d = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        r.setAttribute('data-bs-theme', d);
+    })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/uygulama.css" asp-append-version="true" />
