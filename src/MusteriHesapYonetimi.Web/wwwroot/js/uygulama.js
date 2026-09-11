@@ -45,7 +45,15 @@
   const tema = {
     tercih() { try { return localStorage.getItem('hm-tema') || 'sistem'; } catch (_) { return 'sistem'; } },
     ayarla(t) {
+      const onceki = tema.tercih();
       try { localStorage.setItem('hm-tema', t); } catch (_) { /* depolama kapalı */ }
+      // Extreme sahneyi sayfa açılırken kurar: extreme'e girerken ve çıkarken sayfa perdeyle yeniden açılır (extreme.js)
+      if ((onceki === 'extreme') !== (t === 'extreme')) {
+        const yenile = () => location.reload();
+        if (window.HMPerde && window.HMPerde.kapat(t === 'extreme' ? 'Extreme' : 'Hesap Masası', yenile)) return;
+        yenile();
+        return;
+      }
       const r = document.documentElement;
       if (t === 'acik') r.setAttribute('data-theme', 'light');
       else if (t === 'koyu') r.setAttribute('data-theme', 'dark');
@@ -267,8 +275,8 @@
   $('form .input-validation-error:not([type="hidden"])')?.focus();
 
   /* Anahtar göstergelerde sayma: yalnız tam sayılar, kısa ve yavaşlayarak; hareket azaltılmışsa hiç.
-     Ekran okuyucu ara değerleri değil son değeri okur (aria-label). */
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+     Ekran okuyucu ara değerleri değil son değeri okur (aria-label). Extreme görünümde rakamları extreme.js döndürür. */
+  if (!document.documentElement.hasAttribute('data-extreme') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     $$('[data-sayac]').forEach((el) => {
       const hedef = Number(el.dataset.sayac);
       if (!Number.isFinite(hedef) || hedef <= 0) return;

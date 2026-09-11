@@ -12,8 +12,12 @@
   const kok = document.documentElement;
   const css = (ad) => getComputedStyle(kok).getPropertyValue(ad).trim();
   const tl = (x, isaretli) => HM.para(Math.round(x * 100), isaretli);
-  const hareket = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const cizim = (ilk) => (ilk && hareket ? { duration: 700, easing: 'easeOutQuart' } : false);
+  // Extreme açık bir hareket tercihidir: hareket azaltma ayarı orada uygulanmaz, çubuklar soldan sağa sırayla büyür
+  const extreme = kok.hasAttribute('data-extreme');
+  const hareket = extreme || !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cizim = (ilk) => (!ilk || !hareket ? false : extreme
+    ? { duration: 1300, easing: 'easeOutQuart', delay: (c) => (c.type === 'data' && c.mode === 'default' ? c.dataIndex * 22 : 0) }
+    : { duration: 700, easing: 'easeOutQuart' });
 
   /* TurkceBicim.ParaKisa ile aynı: ₺157,6 mn, ₺48,2 bin */
   const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -201,9 +205,19 @@
     if (!kurucu) return;
     let veri;
     try { veri = JSON.parse(canvas.dataset.veri || '[]'); } catch (_) { return; }
-    const g = { kur: (ilk) => kurucu(canvas, veri, ilk) };
-    g.chart = g.kur(true);
+    const g = { kur: (ilk) => kurucu(canvas, veri, ilk), chart: null };
     grafikler.push(g);
+    // Extreme'de grafik görünür alana gelince çizilir: çizim, kaydırırken karşılaşılan an olur
+    if (extreme && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver((girdiler) => {
+        if (!girdiler.some((x) => x.isIntersecting)) return;
+        io.disconnect();
+        g.chart = g.kur(true);
+      }, { threshold: 0.3 });
+      io.observe(canvas);
+    } else {
+      g.chart = g.kur(true);
+    }
   });
-  document.addEventListener('hm:tema', () => grafikler.forEach((g) => { g.chart.destroy(); g.chart = g.kur(false); }));
+  document.addEventListener('hm:tema', () => grafikler.forEach((g) => { if (!g.chart) return; g.chart.destroy(); g.chart = g.kur(false); }));
 })();

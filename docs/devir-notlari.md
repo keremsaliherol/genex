@@ -17,6 +17,7 @@ yerel değerler `CLAUDE.md`'de.
 | Faz 4: raporlar ve grafikler | Tamam, doğrulandı | S10, S1 grafikleri, detaylarda "Aylık özet" sekmesi |
 | Faz 5: giriş, testler, sunum | Tamam, doğrulandı | S0 ve Identity (`db/05_identity.sql`), 138 birim + 12 entegrasyon testi, yerel fontlar, [demo senaryosu](demo-senaryosu.md) |
 | Faz 6: görsel yenileme | Tamam, doğrulandı | "Masa" tasarım yönü ([../DESIGN.md](../DESIGN.md)): Genex renk dili, Mona Sans, kahraman, işlem akışı şeridi, yeni giriş paneli |
+| Faz 7: Extreme görünüm | Tamam, doğrulandı | Görünüm menüsünde 4. seçenek ([../DESIGN.md](../DESIGN.md) bölüm 8): sorgu perdesi, tam ekran menü, nehir, kesişen bantlar, sabitlenen sahne, basılan dekont |
 | **Kalan (kullanıcıda)** | Demo kaydı; demo günü tohum yenilemesi | Bölüm 7 |
 
 Depo: https://github.com/keremsaliherol/genex (`main`). Her doğrulanmış adım commit edilip push'lanır (CLAUDE.md, "Git ve GitHub").
@@ -73,6 +74,18 @@ Faz 6 (görsel yenileme, "Masa" yönü; kurallar [../DESIGN.md](../DESIGN.md)):
   `#0B0B14` üstünde). Animasyon anahtar kareleri (`belir`, `akis`, `defter`) CSS'te; panel hareket azaltmayı taklit ettiği
   için akış zorlanarak ölçüldü (defter −210 → −490 px). Sunucu günlüğü temiz; konsoldaki 401/404 kayıtları önceki bilinçli
   denemelerden.
+
+Faz 7 (Extreme görünüm; kurallar [../DESIGN.md](../DESIGN.md) bölüm 8, kod `wwwroot/css/extreme.css` + `wwwroot/js/extreme.js`):
+- Görünüm menüsünde "Extreme" seçilince sayfa perdeyle yeniden açılır; head betiği `data-extreme` koyar, koyu temanın
+  token'ları üstüne extreme token'ları yazılır. Kenar menü tam ekran perdeye, paneller çerçevesiz bloklara dönüşür.
+  Sunucu tarafında yalnız layout değişti (menü öğesi, modüllerin Oracle nesnesi `data-nesne`, betik ve stil bağlantısı).
+- Kütüphane eklenmedi: kaydırmaya bağlı efektler CSS `animation-timeline` (scroll/view) ile, geri kalanı vanilla JS
+  (IntersectionObserver, canvas 2D). Desteklemeyen tarayıcıda içerik durağan ve eksiksiz.
+- Doğrulama (tarayıcı paneli, 840 px, 1440×900 ve mobil): menüden Müşteriler'e geçişte perde hedef adıyla kapandı, yeni
+  sayfada o isteğin SQL'i (`EF Core · Müşteri sayısı (filtre)`, `SELECT COUNT(*) FROM "MUSTERI"`) yazıldı ve perde kalktı;
+  satır tıklamasıyla dekonta geçiş, dekontta basılma ve "COMMIT" damgası; genel bakışta sayaç (ara karede "₺000,0 mn"),
+  nehir, iki bant (20 bağlantı), sahne %40'ta -864 px kaydı ve `top: 68px`'e sabitlendi; grafik görünür alana gelince
+  çizildi; Koyu'ya çıkınca sahne öğesi kalmadı, Extreme'e dönüş `aria-checked` ile işaretli; yatay taşma yok.
 
 ## 2. Yeni oturuma başlarken
 
@@ -283,6 +296,12 @@ Kullanıcıda:
 - Bootstrap başlık rengi `--ink`'e bağlı: her temada koyu kalan yüzeylerde (giriş paneli, Oracle izi) başlık ve metin
   renkleri açıkça verilir, yoksa açık temada koyu zemin üstünde koyu yazı kalır.
 - Kenar menüye özgü dar ekran kuralları `.hm-sidebar` ile sınırlanır; `.hm-brand-name` giriş sayfasında da kullanılır.
+- **Extreme:** Oracle izindeki SQL `\r\n` taşır; CSS dizgisindeki çıplak `\r` değişkeni sessizce geçersiz kılar
+  (`cssMetin` temizler). Görünmeyen panelde `requestAnimationFrame` durur: perde yazımı zamanlayıcıyla ve 2 sn güvenlik
+  kalkışıyla. `.hm-shell`'e `z-index` verilmez (tam ekran menü Oracle izinin altında kalır); ışık ve doku `z-index: -1`.
+  Bootstrap `scroll-behavior: smooth` açık: ölçüm için `scrollTo({ behavior: 'instant' })` ya da bekleme.
+- Tarayıcı panelini aynı anda başka bir oturum da sürebilir (sekme kendiliğinden başka sayfaya gider, görünüm boyutu
+  "başka oturum" notuyla değişir): doğrulama `tabs_create` ile açılan ayrı sekmede yapılır.
 - Tarayıcı paneli, sayfa kaydırılmışken ekran görüntüsünün üstünde boş bir bant gösterebilir; panel gizliyken ekran
   görüntüsü alınamaz. Ölçüm için JS kullanılır.
 - Proje OneDrive altında: `bin/`, `obj/`, `node_modules/` senkronize olur, dosya kilidi görülebilir.

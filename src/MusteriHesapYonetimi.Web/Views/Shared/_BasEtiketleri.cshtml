@@ -1,15 +1,23 @@
 @* İki layout'un ortak <head> içeriği: tema betiği, yazı tipleri ve stiller. Fontlar yerelde (css/fontlar.css,
    tools/on-yuz-varliklari.mjs üretir); dış kaynağa istek yok. *@
 <script>
-    // Tema tercihi boyamadan önce uygulanır; açık ve koyu arasında yanıp sönme olmaz.
+    // Tema tercihi boyamadan önce uygulanır; açık ve koyu arasında yanıp sönme olmaz. Extreme koyu temanın üstüne kurulur.
     (function () {
-        var r = document.documentElement, t = null;
+        var r = document.documentElement, t = null, p = null;
         r.classList.add('js');
         try { t = localStorage.getItem('hm-tema'); } catch (e) { t = null; }
         if (t === 'acik') r.setAttribute('data-theme', 'light');
-        else if (t === 'koyu') r.setAttribute('data-theme', 'dark');
+        else if (t === 'koyu' || t === 'extreme') r.setAttribute('data-theme', 'dark');
+        if (t === 'extreme') r.setAttribute('data-extreme', '');
         var d = r.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         r.setAttribute('data-bs-theme', d);
+        // Sorgu perdesi (extreme.js): önceki sayfa perdeyi kapattıysa bu sayfa perde kapalı açılır
+        try { p = JSON.parse(sessionStorage.getItem('hm-perde') || 'null'); sessionStorage.removeItem('hm-perde'); } catch (e) { p = null; }
+        if (p && Date.now() - p.t < 10000) {
+            r.classList.add('perde-gelis');
+            if (t !== 'extreme') r.classList.add('perde-hizli');
+            r.style.setProperty('--perde-baslik', JSON.stringify(String(p.b || '')));
+        }
     })();
 </script>
 @* Ana metin fontu CSS'ten keşfedilmeden indirilmeye başlar: ilk boyamada yedek fonttan Geist'e zıplama olmaz.
@@ -19,3 +27,4 @@
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/uygulama.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/extreme.css" asp-append-version="true" />

@@ -53,6 +53,9 @@ a.sirala { text-decoration: none; color: inherit; }
 .dropdown-item[data-tema] .tik { visibility: hidden; }
 .dropdown-item[data-tema][aria-checked="true"] .tik { visibility: visible; }
 .dropdown-menu form { margin: 0; }
+/* Görünüm menüsünde Extreme: ad Mona Sans geniş, altında ne yaptığı */
+.tema-ad strong { display: block; font-family: var(--font-display); font-stretch: var(--stretch-wide); font-weight: 700; letter-spacing: -0.01em; }
+.tema-ad small { display: block; font-size: 11.5px; color: var(--ink-3); }
 
 /* Canlı filtre: yeni sonuç gelene kadar tablo soluklaşır */
 [data-canli-kap] { transition: opacity var(--dur-1) var(--ease-out); }

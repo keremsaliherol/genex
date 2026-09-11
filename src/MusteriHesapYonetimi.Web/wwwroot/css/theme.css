@@ -658,8 +658,12 @@ pre.sql {
   .iz { left: 0; }
 }
 
+/* Extreme görünüm (uygulamada, wwwroot/css/extreme.css) açık bir hareket tercihidir; bu kural onun dışında geçerli */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
+  :root:not([data-extreme]) *, :root:not([data-extreme]) *::before, :root:not([data-extreme]) *::after,
+  :root:not([data-extreme])::before, :root:not([data-extreme])::after {
+    transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important;
+  }
 }
 
 /* Bileşenler: Razor partial / TagHelper karşılıkları ("Masa" yönü) */

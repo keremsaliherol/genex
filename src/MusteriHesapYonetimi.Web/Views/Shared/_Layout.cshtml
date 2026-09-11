@@ -12,14 +12,15 @@
         ("Rapor", _) => "rapor",
         _ => null
     };
-    var menu = new (string Anahtar, string Adres, string Ikon, string Ad)[]
+    // Nesne: modülün okuduğu ya da çağırdığı başlıca Oracle nesneleri (extreme görünümün tam ekran menüsünde görünür)
+    var menu = new (string Anahtar, string Adres, string Ikon, string Ad, string Nesne)[]
     {
-        ("genel", "/", "squares-four", "Genel bakış"),
-        ("musteri", "/Musteri", "users", "Müşteriler"),
-        ("hesap", "/Hesap", "wallet", "Hesaplar"),
-        ("islem", "/Islem/Yeni", "arrows-left-right", "İşlem yap"),
-        ("ekstre", "/Hesap/Ekstre", "receipt", "Ekstre"),
-        ("rapor", "/Rapor/AylikOzet", "chart-line", "Raporlar")
+        ("genel", "/", "squares-four", "Genel bakış", "HESAP · ISLEM · PKG_RAPOR"),
+        ("musteri", "/Musteri", "users", "Müşteriler", "MUSTERI"),
+        ("hesap", "/Hesap", "wallet", "Hesaplar", "HESAP · VW_PORTFOY"),
+        ("islem", "/Islem/Yeni", "arrows-left-right", "İşlem yap", "PKG_ISLEM"),
+        ("ekstre", "/Hesap/Ekstre", "receipt", "Ekstre", "ISLEM"),
+        ("rapor", "/Rapor/AylikOzet", "chart-line", "Raporlar", "PKG_RAPOR")
     };
     var izGirdileri = OracleIzUzantilari.Girdiler(Context);
     var bildirim = TempData["Bildirim"] as string;
@@ -49,7 +50,7 @@
             <nav class="hm-nav" aria-label="Modüller">
                 @foreach (var m in menu)
                 {
-                    <a href="@m.Adres" title="@m.Ad" aria-current="@(modul == m.Anahtar ? "page" : null)"><ikon ad="@m.Ikon" /><span>@m.Ad</span></a>
+                    <a href="@m.Adres" title="@m.Ad" data-nesne="@m.Nesne" aria-current="@(modul == m.Anahtar ? "page" : null)"><ikon ad="@m.Ikon" /><span>@m.Ad</span></a>
                 }
             </nav>
             <div class="hm-sidebar-foot">
@@ -105,6 +106,7 @@
                             <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="sistem">Sistem<ikon ad="check" class="ic-16 tik" /></button></li>
                             <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="acik">Açık<ikon ad="check" class="ic-16 tik" /></button></li>
                             <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="koyu">Koyu<ikon ad="check" class="ic-16 tik" /></button></li>
+                            <li><button type="button" class="dropdown-item" role="menuitemradio" aria-checked="false" data-tema="extreme"><span class="tema-ad"><strong>Extreme</strong><small>Tam ekran, yoğun hareketli sahne</small></span><ikon ad="check" class="ic-16 tik" /></button></li>
                             <li><hr class="dropdown-divider" /></li>
                             <li>
                                 <form method="post" asp-controller="Giris" asp-action="Cikis">
@@ -152,6 +154,7 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/uygulama.js" asp-append-version="true"></script>
+    <script src="~/js/extreme.js" asp-append-version="true"></script>
     @if (ViewData["Grafik"] is true)
     {
         @* Chart.js yalnız grafikli sayfalarda (genel bakış, aylık özet, bakiye değişimi) *@

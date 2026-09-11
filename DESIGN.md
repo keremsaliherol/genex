@@ -99,6 +99,37 @@ Kızıl butonlarda ve verinin kendisinde kullanılmaz; yalnız kimlik öğelerin
 - Yalnız renkle anlam; grafikte çift eksen, her noktaya sayı, kesikli ızgara.
 - "Oops", ünlem, özür dileyen hata mesajları; "Submit" gibi belirsiz buton adları.
 
+## 8. Extreme görünüm (Faz 7)
+Görünüm menüsünde Sistem / Açık / Koyu'nun yanında dördüncü seçenek. Aynı uygulama, aynı veri ve formlar; kabuk ve
+sunum sahneye dönüşür. Kaynak `wwwroot/css/extreme.css` ve `wwwroot/js/extreme.js` (Razor'a özgü, prototipte yok).
+Seçim localStorage `hm-tema = extreme`; ilk boyamadan önce html'e `data-extreme` konur, koyu temanın token'ları üstüne
+extreme token'ları yazılır.
+
+- **Okuma:** gece seansında bir işlem salonu. Zemin `#07070F`, üstünde yavaşça kayan kızıl ve çivit ışık, ince doku ve
+  imleci izleyen yumuşak ışık. Kızıl bu görünümde enerji rengidir (perde, ilerleme çizgisi, damga, çıkış bandı);
+  birincil düğme açık zemin, üzerine gelince soldan kızıl dolar.
+- **Sorgu perdesi (imza):** her ekran değişiminde Genex degradesinde bir perde iner; hedef ekranın adı Mona Sans'ın
+  genişlik ekseninde %125'ten %75'e daralır. Yeni ekran açılırken o isteğin Oracle izinden okunan SQL'i (varsa PL/SQL
+  çağrısı) perdeye yazılır, sonra perde kalkar. Bağlantılar, tıklanabilir satırlar ve sayfa değiştiren formlar perdeden
+  geçer; yeni sekme, CSV indirme ve API dokunulmaz. Herhangi bir tuş ya da tık perdeyi hemen kaldırır, en geç 2 sn'de kalkar.
+- **Kabuk:** kenar menü yok, içerik kenardan kenara. Menü düğmesi tam ekran bir perde açar (düğmeden daire olarak);
+  modüller dev yazıyla, yanlarında okudukları Oracle nesneleri (`MUSTERI`, `PKG_ISLEM` ...).
+- **Tipografi:** sayfa başlığı 9,5rem'e kadar, açılışta harfler maskeli satırdan yükselir; kaydırdıkça geniş kesimden
+  dar kesime iner ve söner, hızlı kaydırmada eğilir. Büyük rakamlar sayaç gibi 0'dan dönerek yerine oturur.
+- **Yüzeyler:** panel, kart, gölge yok; bloklar ince bir üst çizgiyle ayrılır ve görünür alana girdikçe sırayla gelir.
+  Tablolar defter satırı; üzerindeyken kızıl kenar çizgisi ve müşteri adı genişler.
+- **Genel bakış:** tüm ekran kahraman; toplam bakiye dev dar kesim, arkasında son 30 günün nakit akışı ışıktan bir nehir
+  (girişler üstte çivit, çıkışlar altta kızıl, kalınlık o günün tutarı; imleç nehri iter). Son işlemler iki kesişen bant:
+  açık bant girişler sağa, kızıl bant çıkışlar sola akar; hız kaydırma hızıyla artar, yukarı kaydırınca yön döner.
+  En aktif müşteriler sabitlenen bir sahnede yatay geçer (kaydırmaya bağlı zaman çizelgesi). Grafik görünür alana
+  gelince çubuk çubuk çizilir.
+- **Dekont:** sahnedeki tek kâğıt; yazıcıdan çıkar gibi basamaklarla iner, kenarları delikli, sonra "COMMIT" damgası vurulur.
+- **Hareket tercihi:** Extreme'i seçmek açık bir hareket tercihidir; işletim sisteminin hareket azaltma ayarı bu görünümde
+  uygulanmaz (diğer üç görünümde uygulanır). Kaydırmaya bağlı efektler yalnız destekleyen tarayıcıda; desteklemeyende
+  içerik durağan ve eksiksiz görünür, sahne kartları yatay kaydırılır. Yazdırmada sahne öğeleri gizlenir.
+- **Erişilebilirlik:** bölünmüş başlık `aria-label` ile bütün okunur; sayaçların son değeri görünmez metinde; bantların
+  yalnız ilk dizisi odaklanabilir ve odakta bant durur; menü açıkken Tab menüde döner, Esc kapatır.
+
 ## Prototip notu
 Prototip (`prototype/`) aynı CSS katmanlarını kullanır; ancak derlenmiş `dist/` fontları Google Fonts'tan yalnız Geist
 olarak yükler (Mona Sans yok) ve Faz 6'nın yeni blokları (kahraman, işlem akışı, yeni giriş paneli) yalnız Razor
