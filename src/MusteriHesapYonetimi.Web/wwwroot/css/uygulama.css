@@ -73,3 +73,7 @@ a.sirala { text-decoration: none; color: inherit; }
 .bakiye-cizgisi { display: block; width: 100%; height: 72px; overflow: visible; }
 .bakiye-cizgisi .alan { fill: var(--viz-1-wash); }
 .bakiye-cizgisi .cizgi { fill: none; stroke: var(--viz-1); stroke-width: 1.5; stroke-linejoin: round; }
+
+/* Açılır seçici listesi sonraki bloğun altında kalmasın: giriş animasyonu her .hm-content çocuğunu ayrı katman yapar,
+   sonraki kardeş öncekinin üstüne çizilir. Seçici içeren blok öne alınır. */
+.hm-content > :has(.secici) { position: relative; z-index: 2; }
